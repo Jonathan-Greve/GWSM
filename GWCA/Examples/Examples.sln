@@ -1,0 +1,55 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.3.32922.545
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PacketLogger", "PacketLogger\PacketLogger.vcxproj", "{5AFD5193-1EE6-44BA-AC97-F50BEAB30EBC}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Teleport", "Teleport\Teleport.vcxproj", "{8B852BC5-203D-4894-B95B-F7CAB774B6C1}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "WorldInformation", "WorldInformation\WorldInformation.vcxproj", "{6EE4C799-B9D5-4606-8973-A071D2564878}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GWCA", "..\vc\GWCA.vcxproj", "{B3359F05-68CF-4E7F-B9D6-D106F6D48A38}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MinHook", "..\vc\MinHook.vcxproj", "{AC820BBA-BB5B-4D8C-96FF-EA8138CEED52}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GwArmory", "GwArmory\GwArmory.vcxproj", "{4493B33B-F48E-40BB-85D1-C01116715C6E}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x86 = Debug|x86
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{5AFD5193-1EE6-44BA-AC97-F50BEAB30EBC}.Debug|x86.ActiveCfg = Debug|Win32
+		{5AFD5193-1EE6-44BA-AC97-F50BEAB30EBC}.Debug|x86.Build.0 = Debug|Win32
+		{5AFD5193-1EE6-44BA-AC97-F50BEAB30EBC}.Release|x86.ActiveCfg = Release|Win32
+		{5AFD5193-1EE6-44BA-AC97-F50BEAB30EBC}.Release|x86.Build.0 = Release|Win32
+		{8B852BC5-203D-4894-B95B-F7CAB774B6C1}.Debug|x86.ActiveCfg = Debug|Win32
+		{8B852BC5-203D-4894-B95B-F7CAB774B6C1}.Debug|x86.Build.0 = Debug|Win32
+		{8B852BC5-203D-4894-B95B-F7CAB774B6C1}.Release|x86.ActiveCfg = Release|Win32
+		{8B852BC5-203D-4894-B95B-F7CAB774B6C1}.Release|x86.Build.0 = Release|Win32
+		{6EE4C799-B9D5-4606-8973-A071D2564878}.Debug|x86.ActiveCfg = Debug|Win32
+		{6EE4C799-B9D5-4606-8973-A071D2564878}.Debug|x86.Build.0 = Debug|Win32
+		{6EE4C799-B9D5-4606-8973-A071D2564878}.Release|x86.ActiveCfg = Release|Win32
+		{6EE4C799-B9D5-4606-8973-A071D2564878}.Release|x86.Build.0 = Release|Win32
+		{B3359F05-68CF-4E7F-B9D6-D106F6D48A38}.Debug|x86.ActiveCfg = Debug|Win32
+		{B3359F05-68CF-4E7F-B9D6-D106F6D48A38}.Debug|x86.Build.0 = Debug|Win32
+		{B3359F05-68CF-4E7F-B9D6-D106F6D48A38}.Release|x86.ActiveCfg = Release|Win32
+		{B3359F05-68CF-4E7F-B9D6-D106F6D48A38}.Release|x86.Build.0 = Release|Win32
+		{AC820BBA-BB5B-4D8C-96FF-EA8138CEED52}.Debug|x86.ActiveCfg = Debug|Win32
+		{AC820BBA-BB5B-4D8C-96FF-EA8138CEED52}.Debug|x86.Build.0 = Debug|Win32
+		{AC820BBA-BB5B-4D8C-96FF-EA8138CEED52}.Release|x86.ActiveCfg = Release|Win32
+		{AC820BBA-BB5B-4D8C-96FF-EA8138CEED52}.Release|x86.Build.0 = Release|Win32
+		{4493B33B-F48E-40BB-85D1-C01116715C6E}.Debug|x86.ActiveCfg = Debug|Win32
+		{4493B33B-F48E-40BB-85D1-C01116715C6E}.Debug|x86.Build.0 = Debug|Win32
+		{4493B33B-F48E-40BB-85D1-C01116715C6E}.Release|x86.ActiveCfg = Release|Win32
+		{4493B33B-F48E-40BB-85D1-C01116715C6E}.Release|x86.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {5A2B60CC-CD42-4914-A64C-778CA61AC8E9}
+	EndGlobalSection
+EndGlobal
