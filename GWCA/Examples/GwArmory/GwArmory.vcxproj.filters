@@ -1,0 +1,46 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="ImGui">
+      <UniqueIdentifier>{ff3f7ceb-7359-428a-b050-6693da9340db}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="ImGuiAddons.h" />
+    <ClInclude Include="ArmorsDatabase.h" />
+    <ClInclude Include="imgui_impl_dx9.h" />
+    <ClInclude Include="$(ProjectDir)..\..\..\..\build\_deps\imgui-src\imconfig.h" />
+    <ClInclude Include="$(ProjectDir)..\..\..\..\build\_deps\imgui-src\imstb_truetype.h">
+      <Filter>ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="$(ProjectDir)..\..\..\..\build\_deps\imgui-src\imstb_textedit.h">
+      <Filter>ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="$(ProjectDir)..\..\..\..\build\_deps\imgui-src\imstb_rectpack.h">
+      <Filter>ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="$(ProjectDir)..\..\..\..\build\_deps\imgui-src\imgui_internal.h">
+      <Filter>ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="$(ProjectDir)..\..\..\..\build\_deps\imgui-src\imgui.h">
+      <Filter>ImGui</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="ImGuiAddons.cpp" />
+    <ClCompile Include="imgui_impl_dx9.cpp" />
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="$(ProjectDir)..\..\..\..\build\_deps\imgui-src\imgui.cpp">
+      <Filter>ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="$(ProjectDir)..\..\..\..\build\_deps\imgui-src\imgui_draw.cpp">
+      <Filter>ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="$(ProjectDir)..\..\..\..\build\_deps\imgui-src\imgui_widgets.cpp">
+      <Filter>ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\build\_deps\imgui-src\imgui_tables.cpp">
+      <Filter>ImGui</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

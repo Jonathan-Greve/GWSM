@@ -1,0 +1,96 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Source Files\Thread startup functions">
+      <UniqueIdentifier>{37cc839a-ada9-44ce-adf6-4d9ba7dae46a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Thread startup functions">
+      <UniqueIdentifier>{bf461c3b-ed63-4815-8aa3-6c238587a2d2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Shared memory classes">
+      <UniqueIdentifier>{dbe2b4c2-7544-470a-88f6-ade15fc85842}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Shared memory classes">
+      <UniqueIdentifier>{26e25a7e-f4fc-48b0-8638-d6db03c2f39a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Guild Wars interaction">
+      <UniqueIdentifier>{4688d688-c020-4e88-bcd1-2d4bc124b730}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Guild Wars interaction">
+      <UniqueIdentifier>{4796eb6b-a43b-456a-be70-0bcceba3ae01}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="framework.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="pch.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NewWndProc.h">
+      <Filter>Header Files\Thread startup functions</Filter>
+    </ClInclude>
+    <ClInclude Include="SafeThreadEntry.h">
+      <Filter>Header Files\Thread startup functions</Filter>
+    </ClInclude>
+    <ClInclude Include="SafeWndProc.h">
+      <Filter>Header Files\Thread startup functions</Filter>
+    </ClInclude>
+    <ClInclude Include="ThreadEntry.h">
+      <Filter>Header Files\Thread startup functions</Filter>
+    </ClInclude>
+    <ClInclude Include="KeyboardProc.h">
+      <Filter>Header Files\Thread startup functions</Filter>
+    </ClInclude>
+    <ClInclude Include="GuildWarsSM.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ChatWriter.h">
+      <Filter>Header Files\Guild Wars interaction</Filter>
+    </ClInclude>
+    <ClInclude Include="SharedMemory.h">
+      <Filter>Header Files\Shared memory classes</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="dllmain.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="pch.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NewWndProc.cpp">
+      <Filter>Source Files\Thread startup functions</Filter>
+    </ClCompile>
+    <ClCompile Include="SafeThreadEntry.cpp">
+      <Filter>Source Files\Thread startup functions</Filter>
+    </ClCompile>
+    <ClCompile Include="SafeWndProc.cpp">
+      <Filter>Source Files\Thread startup functions</Filter>
+    </ClCompile>
+    <ClCompile Include="ThreadEntry.cpp">
+      <Filter>Source Files\Thread startup functions</Filter>
+    </ClCompile>
+    <ClCompile Include="GuildWarsSM.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ChatWriter.cpp">
+      <Filter>Source Files\Guild Wars interaction</Filter>
+    </ClCompile>
+    <ClCompile Include="SharedMemory.cpp">
+      <Filter>Source Files\Shared memory classes</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

@@ -1,0 +1,41 @@
+# Build directories
+Debug/
+Release/
+*exe
+
+# Bloated Windows Databases
+.vs/
+*.db
+*.sdf
+*.suo
+*.opendb
+*.opensdf
+
+# Compiled Object files
+*.o
+*.lo
+*.lib
+*.obj
+*.slo
+
+# Precompiled Headers
+*.exp
+*.gch
+*.idb
+*.ilk
+*.pdb
+*.tmp
+*.pch
+*.iobj
+*.ipch
+*.ipdb
+dox/
+
+# Sublime Text stuff
+*.sublime-project*
+*.sublime-workspace*
+*.vcxproj.user
+build/
+
+# VSCode stuff
+.vscode/
