@@ -1,6 +1,6 @@
 #include "pch.h"
 
-#include "GuildWarsSM.h"
+#include "GWSM.h"
 #include "NewWndProc.h"
 
 LRESULT CALLBACK SafeWndProc(HWND hWnd, UINT Message, WPARAM wParam, LPARAM lParam) noexcept

@@ -1,5 +1,5 @@
 #pragma once
-#include "GuildWarsSM.h"
+#include "GWSM.h"
 
 LRESULT CALLBACK KeyboardProc(_In_ int code, _In_ WPARAM wParam,
                               _In_ LPARAM lParam) {
@@ -8,7 +8,7 @@ LRESULT CALLBACK KeyboardProc(_In_ int code, _In_ WPARAM wParam,
     }
 
     if (wParam == VK_END) {
-        GuildWarsSM::Instance().Terminate();
+        GWSM::Instance().Terminate();
     }
 
     return CallNextHookEx(nullptr, code, wParam, lParam);

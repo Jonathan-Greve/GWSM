@@ -6,7 +6,7 @@
 #include "Managers/GameThreadMgr.h"
 #include "Utilities/Hooker.h"
 
-#include "GuildWarsSM.h"
+#include "GWSM.h"
 
 DWORD __stdcall ThreadEntry(LPVOID)
 {
@@ -21,9 +21,9 @@ DWORD __stdcall ThreadEntry(LPVOID)
     }
 
     GW::HookBase::EnableHooks();
-    GW::GameThread::Enqueue([]() { GuildWarsSM::Instance().Init(); });
+    GW::GameThread::Enqueue([]() { GWSM::Instance().Init(); });
 
-    while (! GuildWarsSM::Instance().has_freed_resources)
+    while (! GWSM::Instance().has_freed_resources)
     {
         // wait until destruction
         Sleep(100);
@@ -40,6 +40,8 @@ DWORD __stdcall ThreadEntry(LPVOID)
     Sleep(16);
 leave:
     GW::Terminate();
-
+        
+    // Seems to fix crash when sleeping here.
+    Sleep(16);
     FreeLibraryAndExitThread(dll_module, EXIT_SUCCESS);
 }

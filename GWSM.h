@@ -19,17 +19,17 @@ inline HHOOK keyboard_hook_handle;
 // Store the hook for the update method which is called once per frame.
 inline GW::HookEntry Update_Entry;
 
-class GuildWarsSM
+class GWSM
 {
 
 public:
     // Delete copy constructor and operator
-    GuildWarsSM(const GuildWarsSM&) = delete;
-    void operator=(const GuildWarsSM&) = delete;
+    GWSM(const GWSM&) = delete;
+    void operator=(const GWSM&) = delete;
 
-    static GuildWarsSM& Instance()
+    static GWSM& Instance()
     {
-        static GuildWarsSM instance;
+        static GWSM instance;
         return instance;
     }
 
@@ -43,7 +43,5 @@ public:
     bool has_freed_resources = false;
 
 private:
-    GuildWarsSM() = default;
-
-    SharedMemory m_shared_memory;
+    GWSM() = default;
 };

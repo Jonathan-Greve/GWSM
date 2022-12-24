@@ -9,7 +9,6 @@
 
 // add headers that you want to pre-compile here
 #include "framework.h"
-#include <boost/interprocess/managed_shared_memory.hpp>
 #include <string>
 #include <format>
 #include <map>
@@ -21,7 +20,6 @@
 #include <functional>
 
 // Other stuff
-#include "SharedMemory.h"
 
 // Definitions
 using PartyId = int;

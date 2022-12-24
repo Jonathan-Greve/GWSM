@@ -1,12 +1,10 @@
 #include "pch.h"
-#include "GuildWarsSM.h"
+#include "GWSM.h"
 
 #include "KeyboardProc.h"
 #include "SafeWndProc.h"
 
-using namespace boost::interprocess;
-
-void GuildWarsSM::Init()
+void GWSM::Init()
 {
     ChatWriter::WriteIngameDebugChat("Init: Called.", ChatColor::Green);
     // Set up our own NewWndHandle and store a copy of the default WndProc in DefaultWndProc
@@ -32,14 +30,11 @@ void GuildWarsSM::Init()
     std::wstring email_wchar = GW::GetCharContext()->player_email;
     std::string email{email_wchar.begin(), email_wchar.end()};
 
-    // Create shared memory object;
-    m_shared_memory.init(email);
-
     ChatWriter::WriteIngameDebugChat("Init: Finished.", ChatColor::Green);
 }
 
 // Remove all hooks. Free all resources. Disconnect any connections to external processes.
-void GuildWarsSM::Terminate()
+void GWSM::Terminate()
 {
     ChatWriter::WriteIngameDebugChat("Terminate: Called.", ChatColor::DarkRed);
     if (! has_freed_resources)
@@ -65,9 +60,9 @@ void GuildWarsSM::Terminate()
     ChatWriter::WriteIngameDebugChat("Terminate: Finished.", ChatColor::DarkRed);
 }
 
-void GuildWarsSM::Update(GW::HookStatus*)
+void GWSM::Update(GW::HookStatus*)
 {
-    if (! GuildWarsSM::Instance().has_freed_resources && ! GuildWarsSM::Instance().GW_is_closing)
+    if (! GWSM::Instance().has_freed_resources && ! GWSM::Instance().GW_is_closing)
     {
         static DWORD last_tick_count;
         if (last_tick_count == 0)
@@ -82,7 +77,7 @@ void GuildWarsSM::Update(GW::HookStatus*)
         const auto instance_type = GW::Map::GetInstanceType();
         const auto pregame_context = GW::GetPreGameContext();
         const auto cam = GW::CameraMgr::GetCamera();
-        auto& sm_instance = GuildWarsSM::Instance();
+        auto& sm_instance = GWSM::Instance();
         if (instance_type == GW::Constants::InstanceType::Loading)
         {
             // In load screen.

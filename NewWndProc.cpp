@@ -1,6 +1,6 @@
 #include "pch.h"
 
-#include "GuildWarsSM.h"
+#include "GWSM.h"
 
 LRESULT NewWndProc(HWND hWnd, UINT Message, WPARAM wParam, LPARAM lParam)
 {
@@ -8,16 +8,16 @@ LRESULT NewWndProc(HWND hWnd, UINT Message, WPARAM wParam, LPARAM lParam)
     // in the top right corner of the window or when pressing Alt-f4.
     if (Message == WM_CLOSE)
     {
-        if (! GuildWarsSM::Instance().GW_is_closing)
+        if (! GWSM::Instance().GW_is_closing)
         {
 
             // Alert our code that the GW process is closing.
-            GuildWarsSM::Instance().GW_is_closing = true;
+            GWSM::Instance().GW_is_closing = true;
 
             // We want to make sure that all resources acquired by our bot are closed.
             // before the close the window/application. So we defer closing and manually
             // resend the WM_CLOSE message when all resources are freed.
-            GuildWarsSM::Instance().Terminate();
+            GWSM::Instance().Terminate();
             return 0;
         }
     }

@@ -54,14 +54,11 @@
     <ClInclude Include="KeyboardProc.h">
       <Filter>Header Files\Thread startup functions</Filter>
     </ClInclude>
-    <ClInclude Include="GuildWarsSM.h">
+    <ClInclude Include="GWSM.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ChatWriter.h">
       <Filter>Header Files\Guild Wars interaction</Filter>
-    </ClInclude>
-    <ClInclude Include="SharedMemory.h">
-      <Filter>Header Files\Shared memory classes</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -83,14 +80,11 @@
     <ClCompile Include="ThreadEntry.cpp">
       <Filter>Source Files\Thread startup functions</Filter>
     </ClCompile>
-    <ClCompile Include="GuildWarsSM.cpp">
+    <ClCompile Include="GWSM.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="ChatWriter.cpp">
       <Filter>Source Files\Guild Wars interaction</Filter>
-    </ClCompile>
-    <ClCompile Include="SharedMemory.cpp">
-      <Filter>Source Files\Shared memory classes</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
