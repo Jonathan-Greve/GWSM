@@ -31,7 +31,7 @@ using InstanceId = uint32_t;
 
 #include "Context/CharContext.h"
 #include "Context/PreGameContext.h"
-#include "Context/MapContext.h"
+#include "Context/MapContext.h"	
 #include "Context/PartyContext.h"
 #include "Context/WorldContext.h"
 #include "Context/AgentContext.h"
@@ -46,6 +46,7 @@ using InstanceId = uint32_t;
 #include "Managers/StoCMgr.h"
 #include "Managers/MapMgr.h"
 #include "Managers/CameraMgr.h"
+#include "Managers/UIMgr.h"
 
 // My header that depend on GWCA
 #include "ChatWriter.h"

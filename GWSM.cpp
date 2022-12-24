@@ -30,13 +30,16 @@ void GWSM::Init()
     std::wstring email_wchar = GW::GetCharContext()->player_email;
     std::string email{email_wchar.begin(), email_wchar.end()};
 
+   
+
+
     ChatWriter::WriteIngameDebugChat("Init: Finished.", ChatColor::Green);
 }
 
 // Remove all hooks. Free all resources. Disconnect any connections to external processes.
 void GWSM::Terminate()
 {
-    ChatWriter::WriteIngameDebugChat("Terminate: Called.", ChatColor::DarkRed);
+    ChatWriter::WriteIngameDebugChat("Terminate: Called.", ChatColor::Blue);
     if (! has_freed_resources)
     {
         GW::GameThread::RemoveGameThreadCallback(&Update_Entry);
@@ -48,7 +51,7 @@ void GWSM::Terminate()
 
         // Let ThreadEntry know that it can finish terminating our dll thread.
         has_freed_resources = true;
-        ChatWriter::WriteIngameDebugChat("Terminate: Freed resources.", ChatColor::DarkRed);
+        ChatWriter::WriteIngameDebugChat("Terminate: Freed resources.", ChatColor::Blue);
 
         // If terminate was called because the window is closing (i.e. Alt-f4 or pressed close)
         // Then resend the WM_CLOSE signal that we intercepted earlier in NewWndProc.
@@ -57,8 +60,11 @@ void GWSM::Terminate()
             SendMessageW(current_GW_window_handle, WM_CLOSE, NULL, NULL);
         }
     }
-    ChatWriter::WriteIngameDebugChat("Terminate: Finished.", ChatColor::DarkRed);
+
+    ChatWriter::WriteIngameDebugChat("Terminate: Finished.", ChatColor::Blue);
 }
+
+//static int test = 1;
 
 void GWSM::Update(GW::HookStatus*)
 {
@@ -89,12 +95,14 @@ void GWSM::Update(GW::HookStatus*)
         }
         else if (cam && ! std::isinf(cam->position.x))
         {
-            // Our character is loaded in game and can move around.
-            const auto char_context = GW::GetCharContext();
-            if (char_context)
-            {
-                InstanceId instance_id = char_context->token1;
-            }
+            GW::GameThread::Enqueue([&]() {
+                auto window_pos = GetWindowPosition(GW::UI::WindowID::WindowID_QuestLog);
+            if (!window_pos->visible())
+                GW::UI::Keypress(GW::UI::ControlAction_OpenQuestLog);
+                });
+        }
+        else {
+            // Could be login screen. Haven't tested yet.
         }
     }
 }
