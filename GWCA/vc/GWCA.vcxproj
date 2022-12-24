@@ -87,6 +87,7 @@
     <ClCompile Include="..\Source\CtoSMgr.cpp" />
     <ClCompile Include="..\Source\Debug.cpp" />
     <ClCompile Include="..\Source\EffectMgr.cpp" />
+    <ClCompile Include="..\Source\EventMgr.cpp" />
     <ClCompile Include="..\Source\FriendListMgr.cpp" />
     <ClCompile Include="..\Source\GamePos.cpp" />
     <ClCompile Include="..\Source\GameThreadMgr.cpp" />
@@ -111,11 +112,6 @@
     <ClCompile Include="..\Source\StoCMgr.cpp" />
     <ClCompile Include="..\Source\TradeMgr.cpp" />
     <ClCompile Include="..\Source\UIMgr.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="MinHook.vcxproj">
-      <Project>{ac820bba-bb5b-4d8c-96ff-ea8138ceed52}</Project>
-    </ProjectReference>
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{B3359F05-68CF-4E7F-B9D6-D106F6D48A38}</ProjectGuid>
@@ -167,7 +163,7 @@
       <LanguageStandard>stdcpp17</LanguageStandard>
       <RuntimeTypeInfo>false</RuntimeTypeInfo>
       <ExceptionHandling>false</ExceptionHandling>
-      <TreatWarningAsError>true</TreatWarningAsError>
+      <TreatWarningAsError>false</TreatWarningAsError>
       <AdditionalOptions>/EHsc %(AdditionalOptions)</AdditionalOptions>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
@@ -189,7 +185,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <ExceptionHandling>false</ExceptionHandling>
-      <TreatWarningAsError>true</TreatWarningAsError>
+      <TreatWarningAsError>false</TreatWarningAsError>
       <AdditionalOptions>/EHsc %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
