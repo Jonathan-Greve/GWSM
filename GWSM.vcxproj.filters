@@ -1,0 +1,54 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="GWSM.cpp" />
+    <ClCompile Include="pch.cpp" />
+    <ClCompile Include="NewWndProc.cpp">
+      <Filter>thread start files</Filter>
+    </ClCompile>
+    <ClCompile Include="SafeThreadEntry.cpp">
+      <Filter>thread start files</Filter>
+    </ClCompile>
+    <ClCompile Include="SafeWndProc.cpp">
+      <Filter>thread start files</Filter>
+    </ClCompile>
+    <ClCompile Include="ThreadEntry.cpp">
+      <Filter>thread start files</Filter>
+    </ClCompile>
+    <ClCompile Include="dllmain.cpp">
+      <Filter>thread start files</Filter>
+    </ClCompile>
+    <ClCompile Include="ChatWriter.cpp">
+      <Filter>GW interaction</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="framework.h" />
+    <ClInclude Include="GWSM.h" />
+    <ClInclude Include="KeyboardProc.h" />
+    <ClInclude Include="pch.h" />
+    <ClInclude Include="NewWndProc.h">
+      <Filter>thread start files</Filter>
+    </ClInclude>
+    <ClInclude Include="SafeThreadEntry.h">
+      <Filter>thread start files</Filter>
+    </ClInclude>
+    <ClInclude Include="SafeWndProc.h">
+      <Filter>thread start files</Filter>
+    </ClInclude>
+    <ClInclude Include="ThreadEntry.h">
+      <Filter>thread start files</Filter>
+    </ClInclude>
+    <ClInclude Include="ChatWriter.h">
+      <Filter>GW interaction</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="thread start files">
+      <UniqueIdentifier>{326c5057-da4e-49c9-a072-af2c33674219}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GW interaction">
+      <UniqueIdentifier>{a06c4288-61d1-4bff-a2aa-c12971efe5c3}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
