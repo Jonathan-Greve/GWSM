@@ -26,12 +26,7 @@ void GWSM::Init()
         Terminate();
     }
 
-    // Get client accounts email
-    std::wstring email_wchar = GW::GetCharContext()->player_email;
-    std::string email{email_wchar.begin(), email_wchar.end()};
-
-   
-
+    connection_manager_.connect();
 
     ChatWriter::WriteIngameDebugChat("Init: Finished.", ChatColor::Green);
 }
@@ -42,6 +37,7 @@ void GWSM::Terminate()
     ChatWriter::WriteIngameDebugChat("Terminate: Called.", ChatColor::Blue);
     if (! has_freed_resources)
     {
+        connection_manager_.disconnect();
         GW::GameThread::RemoveGameThreadCallback(&Update_Entry);
 
         UnhookWindowsHookEx(keyboard_hook_handle);

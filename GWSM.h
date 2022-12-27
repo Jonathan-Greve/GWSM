@@ -1,5 +1,6 @@
 #pragma once
 #include "Utilities/Hook.h"
+#include <codecvt>
 
 // Forwards declarations. The header files will be included in the .cpp file
 // This speeds up compilation.
@@ -43,5 +44,14 @@ public:
     bool has_freed_resources = false;
 
 private:
-    GWSM() = default;
+    GWSM() : connection_manager_(wstr_to_str(GW::GetCharContext()->player_email)) {};
+
+    GWIPC::ConnectionManager connection_manager_;
+
+    #pragma warning(disable: 4996) // Deprecation error
+    std::string wstr_to_str(const wchar_t* wstr) {
+        std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> converter;
+        return converter.to_bytes(wstr);
+    }
+    #pragma warning(pop)
 };

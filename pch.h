@@ -21,9 +21,7 @@
 
 // Other stuff
 
-// Definitions
-using PartyId = int;
-using InstanceId = uint32_t;
+#include "GWIPC.h";
 
 // GWCA includes
 #include "Constants/Maps.h"
