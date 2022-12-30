@@ -14,7 +14,7 @@ void GWSM::Init()
       SetWindowLongPtrW(current_GW_window_handle, GWL_WNDPROC, reinterpret_cast<long>(SafeWndProc));
 
     // Register our Update method to be called on each frame from within the game thread.
-    // Note that the game thread is separate from the current thread. It is the thread
+    // Note that the game thread is separate from the current thread. It is thE thread
     // controlled by the GW client.
     GW::GameThread::RegisterGameThreadCallback(&Update_Entry, Update);
 
@@ -38,6 +38,7 @@ void GWSM::Terminate()
     if (! has_freed_resources)
     {
         connection_manager_.disconnect();
+        connection_manager_.terminate();
         GW::GameThread::RemoveGameThreadCallback(&Update_Entry);
 
         UnhookWindowsHookEx(keyboard_hook_handle);
@@ -79,7 +80,7 @@ void GWSM::Update(GW::HookStatus*)
         const auto instance_type = GW::Map::GetInstanceType();
         const auto pregame_context = GW::GetPreGameContext();
         const auto cam = GW::CameraMgr::GetCamera();
-        auto& sm_instance = GWSM::Instance();
+        auto& gwsm_instance = GWSM::Instance();
         if (instance_type == GW::Constants::InstanceType::Loading)
         {
             // In load screen.
@@ -91,13 +92,20 @@ void GWSM::Update(GW::HookStatus*)
         }
         else if (cam && ! std::isinf(cam->position.x))
         {
-            GW::GameThread::Enqueue([&]() {
-                auto window_pos = GetWindowPosition(GW::UI::WindowID::WindowID_QuestLog);
-            if (!window_pos->visible())
-                GW::UI::Keypress(GW::UI::ControlAction_OpenQuestLog);
-                });
+            // Always keep quest log open
+            GW::GameThread::Enqueue(
+              [&]()
+              {
+                  auto window_pos = GetWindowPosition(GW::UI::WindowID::WindowID_QuestLog);
+                  if (! window_pos->visible())
+                      GW::UI::Keypress(GW::UI::ControlAction_OpenQuestLog);
+              });
+
+            // Update ClientData
+            gwsm_instance.client_data_updater_.update();
         }
-        else {
+        else
+        {
             // Could be login screen. Haven't tested yet.
         }
     }

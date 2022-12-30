@@ -21,6 +21,7 @@
     <ClCompile Include="ChatWriter.cpp">
       <Filter>GW interaction</Filter>
     </ClCompile>
+    <ClCompile Include="ClientDataUpdater.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="framework.h" />
@@ -42,6 +43,7 @@
     <ClInclude Include="ChatWriter.h">
       <Filter>GW interaction</Filter>
     </ClInclude>
+    <ClInclude Include="ClientDataUpdater.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="thread start files">
@@ -49,6 +51,9 @@
     </Filter>
     <Filter Include="GW interaction">
       <UniqueIdentifier>{a06c4288-61d1-4bff-a2aa-c12971efe5c3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Update functions">
+      <UniqueIdentifier>{506fee14-0cee-424f-876e-026c27ffdf87}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

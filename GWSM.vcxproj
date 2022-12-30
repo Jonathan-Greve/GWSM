@@ -93,7 +93,7 @@
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <LanguageStandard_C>Default</LanguageStandard_C>
-      <AdditionalIncludeDirectories>C:\Users\Jonathan\source\repos\GWIPC\GWIPC;C:\Users\Jonathan\source\repos\Jonathan-Greve\GWSM\GWCA\Include;C:\Users\Jonathan\source\repos\Jonathan-Greve\GWSM\GWCA\Include\GWCA;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\jonag\source\repos\Jonathan-Greve\GWSM\GWCA\Include;C:\Users\jonag\source\repos\Jonathan-Greve\GWSM\GWCA\Include\GWCA;C:\Users\jonag\source\repos\Jonathan-Greve\GWIPC\GWIPC;C:\Users\Jonathan\source\repos\GWIPC\GWIPC;C:\Users\Jonathan\source\repos\Jonathan-Greve\GWSM\GWCA\Include;C:\Users\Jonathan\source\repos\Jonathan-Greve\GWSM\GWCA\Include\GWCA;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
     <Link>
@@ -114,7 +114,7 @@
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <LanguageStandard_C>Default</LanguageStandard_C>
-      <AdditionalIncludeDirectories>C:\Users\Jonathan\source\repos\GWIPC\GWIPC;C:\Users\Jonathan\source\repos\Jonathan-Greve\GWSM\GWCA\Include;C:\Users\Jonathan\source\repos\Jonathan-Greve\GWSM\GWCA\Include\GWCA;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\jonag\source\repos\Jonathan-Greve\GWSM\GWCA\Include;C:\Users\jonag\source\repos\Jonathan-Greve\GWSM\GWCA\Include\GWCA;C:\Users\jonag\source\repos\Jonathan-Greve\GWIPC\GWIPC;C:\Users\Jonathan\source\repos\GWIPC\GWIPC;C:\Users\Jonathan\source\repos\Jonathan-Greve\GWSM\GWCA\Include;C:\Users\Jonathan\source\repos\Jonathan-Greve\GWSM\GWCA\Include\GWCA;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
@@ -134,7 +134,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>C:\Users\Jonathan\source\repos\Jonathan-Greve\GWSM\GWCA\Include;C:\Users\Jonathan\source\repos\Jonathan-Greve\GWSM\GWCA\Include\GWCA;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\jonag\source\repos\Jonathan-Greve\GWIPC\GWIPC;C:\Users\Jonathan\source\repos\Jonathan-Greve\GWSM\GWCA\Include;C:\Users\Jonathan\source\repos\Jonathan-Greve\GWSM\GWCA\Include\GWCA;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -153,7 +153,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>C:\Users\Jonathan\source\repos\Jonathan-Greve\GWSM\GWCA\Include;C:\Users\Jonathan\source\repos\Jonathan-Greve\GWSM\GWCA\Include\GWCA;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\jonag\source\repos\Jonathan-Greve\GWIPC\GWIPC;C:\Users\Jonathan\source\repos\Jonathan-Greve\GWSM\GWCA\Include;C:\Users\Jonathan\source\repos\Jonathan-Greve\GWSM\GWCA\Include\GWCA;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -165,6 +165,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="ChatWriter.h" />
+    <ClInclude Include="ClientDataUpdater.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="GWSM.h" />
     <ClInclude Include="KeyboardProc.h" />
@@ -176,6 +177,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ChatWriter.cpp" />
+    <ClCompile Include="ClientDataUpdater.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="GWSM.cpp" />
     <ClCompile Include="NewWndProc.cpp" />
