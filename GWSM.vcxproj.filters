@@ -21,8 +21,10 @@
     <ClCompile Include="ChatWriter.cpp">
       <Filter>GW interaction</Filter>
     </ClCompile>
-    <ClCompile Include="ClientDataUpdater.cpp" />
     <ClCompile Include="string_utils.cpp" />
+    <ClCompile Include="ClientDataUpdater.cpp">
+      <Filter>Update functions</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="framework.h" />
@@ -44,8 +46,13 @@
     <ClInclude Include="ChatWriter.h">
       <Filter>GW interaction</Filter>
     </ClInclude>
-    <ClInclude Include="ClientDataUpdater.h" />
     <ClInclude Include="string_utils.h" />
+    <ClInclude Include="ClientDataUpdater.h">
+      <Filter>Update functions</Filter>
+    </ClInclude>
+    <ClInclude Include="UpdateStatus.h">
+      <Filter>Update functions</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="thread start files">

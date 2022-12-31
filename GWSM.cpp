@@ -81,14 +81,16 @@ void GWSM::Update(GW::HookStatus*)
         const auto pregame_context = GW::GetPreGameContext();
         const auto cam = GW::CameraMgr::GetCamera();
         auto& gwsm_instance = GWSM::Instance();
-        if (instance_type == GW::Constants::InstanceType::Loading)
-        {
-            // In load screen.
-            return;
-        }
-        else if (pregame_context != nullptr)
+        UpdateStatus update_status;
+        if (pregame_context != nullptr)
         {
             // We are on the character select screen.
+            update_status.game_state = GWIPC::GameState::GameState_CharSelect;
+        }
+        else if (instance_type == GW::Constants::InstanceType::Loading)
+        {
+            // In load screen.
+            update_status.game_state = GWIPC::GameState::GameState_Loading;
         }
         else if (cam && ! std::isinf(cam->position.x))
         {
@@ -101,12 +103,13 @@ void GWSM::Update(GW::HookStatus*)
                       GW::UI::Keypress(GW::UI::ControlAction_OpenQuestLog);
               });
 
-            // Update ClientData
-            gwsm_instance.client_data_updater_.update();
+            update_status.game_state = GWIPC::GameState::GameState_InGame;
         }
         else
         {
-            // Could be login screen. Haven't tested yet.
+            update_status.game_state = GWIPC::GameState::GameState_Unknown;
         }
+
+        gwsm_instance.client_data_updater_.update(update_status);
     }
 }

@@ -175,6 +175,7 @@
     <ClInclude Include="SafeWndProc.h" />
     <ClInclude Include="string_utils.h" />
     <ClInclude Include="ThreadEntry.h" />
+    <ClInclude Include="UpdateStatus.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ChatWriter.cpp" />

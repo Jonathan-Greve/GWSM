@@ -10,7 +10,7 @@ public:
     {
     }
 
-    void update()
+    void update(UpdateStatus update_status)
     {
         // Create a flatbuffer builder object
         flatbuffers::FlatBufferBuilder builder;
@@ -28,7 +28,8 @@ public:
         build_party(builder, party);
 
         // Create the ClientData object
-        auto client_data = GWIPC::CreateClientData(builder, character, instance, party);
+        auto client_data =
+          GWIPC::CreateClientData(builder, character, instance, party, update_status.game_state);
 
         // Finish creating the flatbuffer and retrieve a pointer to the buffer
         builder.Finish(client_data);
@@ -46,6 +47,15 @@ private:
     void build_character(flatbuffers::FlatBufferBuilder& builder,
                          flatbuffers::Offset<GWIPC::Character>& character)
     {
+
+        auto character_context = GW::GetCharContext();
+
+        flatbuffers::Offset<flatbuffers::String> name;
+        if (character_context)
+        {
+            auto char_name = wstr_to_str(character_context->player_name);
+            name = builder.CreateString(char_name.c_str());
+        }
 
         GWIPC::AgentLivingBuilder agent_living_builder(builder);
 
@@ -83,12 +93,8 @@ private:
             agent_living_builder.add_weapon_attack_speed_modifier(character_agent->attack_speed_modifier);
         }
 
-        auto character_context = GW::GetCharContext();
-        if (character_context)
-        {
-            auto name = builder.CreateString(wstr_to_str(character_context->player_name).c_str());
+        if (! name.IsNull())
             agent_living_builder.add_name(name);
-        }
 
         auto agent_living = agent_living_builder.Finish();
         character = GWIPC::CreateCharacter(builder, agent_living);
@@ -116,7 +122,11 @@ private:
         auto party_context = GW::GetPartyContext();
         if (party_context)
         {
-            party_builder.add_party_id(party_context->player_party->party_id);
+            auto player_party = party_context->player_party;
+            if (player_party)
+            {
+                party_builder.add_party_id(player_party->party_id);
+            }
         }
 
         party = party_builder.Finish();

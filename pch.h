@@ -23,6 +23,7 @@
 
 #include "GWIPC.h";
 #include "string_utils.h"
+#include "UpdateStatus.h"
 
 // GWCA includes
 #include "Constants/Maps.h"
