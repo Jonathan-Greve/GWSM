@@ -20,9 +20,12 @@ public:
         build_character(builder, character);
 
         // Create the Instance object
-        auto instance = GWIPC::CreateInstance(builder, 26, 27);
+        flatbuffers::Offset<GWIPC::Instance> instance;
+        build_instance(builder, instance);
 
-        auto party = GWIPC::CreateParty(builder, 123, 42);
+        // Create the Party object
+        flatbuffers::Offset<GWIPC::Party> party;
+        build_party(builder, party);
 
         // Create the ClientData object
         auto client_data = GWIPC::CreateClientData(builder, character, instance, party);
@@ -43,22 +46,79 @@ private:
     void build_character(flatbuffers::FlatBufferBuilder& builder,
                          flatbuffers::Offset<GWIPC::Character>& character)
     {
-        // Create the vectors for the nested Vec2 and Vec3 structs
-        auto position = GWIPC::Vec3(1.0f, 2.0f, 3.0f);
-        auto terrain_normal = GWIPC::Vec3(4.0f, 5.0f, 6.0f);
-        auto velocity = GWIPC::Vec2(7.0f, 8.0f);
 
-        // Create the Agent object
-        GWIPC::Agent agent(1, position, terrain_normal, 9.0f, velocity, 10.0f, 11.0f, 12);
+        GWIPC::AgentLivingBuilder agent_living_builder(builder);
 
-        // Create the string for the name field
-        auto name = builder.CreateString("Test Character");
+        auto character_agent = GW::Agents::GetCharacter();
+        if (character_agent)
+        {
+            auto position = GWIPC::Vec3(character_agent->x, -character_agent->z, character_agent->y);
+            auto terrain_normal =
+              GWIPC::Vec3(character_agent->terrain_normal.x, -character_agent->terrain_normal.z,
+                          character_agent->terrain_normal.y);
+            auto velocity = GWIPC::Vec2(character_agent->velocity.x, character_agent->velocity.y);
 
-        //Create the AgentLiving object
-        auto agent_living = CreateAgentLiving(builder, &agent, name, 13, 14.0f, 15.0f, 16.0f, 17,
-                                              (GWIPC::Profession)1, (GWIPC::Profession)2, (GWIPC::TeamColor)3,
-                                              18, 19, 20.0f, 21.0f, 22.0f, 23.0f, 24.0f, 25.0f);
+            GWIPC::Agent agent(character_agent->agent_id, position, terrain_normal,
+                               character_agent->rotation_angle, velocity, character_agent->width1,
+                               character_agent->height1, character_agent->timer);
 
+            agent_living_builder.add_agent(&agent);
+            agent_living_builder.add_animation_type(character_agent->animation_type);
+            agent_living_builder.add_energy(character_agent->energy);
+            agent_living_builder.add_energy_recharge(character_agent->energy_regen);
+            agent_living_builder.add_guild_id(character_agent->tags->guild_id);
+            agent_living_builder.add_health(character_agent->hp);
+            agent_living_builder.add_health_recharge(character_agent->hp_pips);
+            agent_living_builder.add_level(character_agent->level);
+            agent_living_builder.add_max_energy(character_agent->max_energy);
+            agent_living_builder.add_max_health(character_agent->max_hp);
+            agent_living_builder.add_owner_agent_id(character_agent->owner);
+            agent_living_builder.add_player_number(character_agent->player_number);
+            agent_living_builder.add_primary_profession(
+              static_cast<GWIPC::Profession>(character_agent->primary));
+            agent_living_builder.add_secondary_profession(
+              static_cast<GWIPC::Profession>(character_agent->secondary));
+            agent_living_builder.add_team_color(static_cast<GWIPC::TeamColor>(character_agent->team_id));
+            agent_living_builder.add_weapon_attack_speed(character_agent->weapon_attack_speed);
+            agent_living_builder.add_weapon_attack_speed_modifier(character_agent->attack_speed_modifier);
+        }
+
+        auto character_context = GW::GetCharContext();
+        if (character_context)
+        {
+            auto name = builder.CreateString(wstr_to_str(character_context->player_name).c_str());
+            agent_living_builder.add_name(name);
+        }
+
+        auto agent_living = agent_living_builder.Finish();
         character = GWIPC::CreateCharacter(builder, agent_living);
+    }
+
+    void build_instance(flatbuffers::FlatBufferBuilder& builder,
+                        flatbuffers::Offset<GWIPC::Instance>& instance)
+    {
+
+        GWIPC::InstanceBuilder instance_builder(builder);
+        auto character_context = GW::GetCharContext();
+        if (character_context)
+        {
+            instance_builder.add_instance_id(character_context->token1);
+            instance_builder.add_map_id(character_context->map_id);
+        }
+
+        instance = instance_builder.Finish();
+    }
+
+    void build_party(flatbuffers::FlatBufferBuilder& builder, flatbuffers::Offset<GWIPC::Party>& party)
+    {
+        GWIPC::PartyBuilder party_builder(builder);
+
+        auto party_context = GW::GetPartyContext();
+        if (party_context)
+        {
+            party_builder.add_party_id(party_context->player_party->party_id);
+        }
+
+        party = party_builder.Finish();
     }
 };

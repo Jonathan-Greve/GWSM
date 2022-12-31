@@ -173,6 +173,7 @@
     <ClInclude Include="pch.h" />
     <ClInclude Include="SafeThreadEntry.h" />
     <ClInclude Include="SafeWndProc.h" />
+    <ClInclude Include="string_utils.h" />
     <ClInclude Include="ThreadEntry.h" />
   </ItemGroup>
   <ItemGroup>
@@ -189,6 +190,7 @@
     </ClCompile>
     <ClCompile Include="SafeThreadEntry.cpp" />
     <ClCompile Include="SafeWndProc.cpp" />
+    <ClCompile Include="string_utils.cpp" />
     <ClCompile Include="ThreadEntry.cpp" />
   </ItemGroup>
   <ItemGroup>

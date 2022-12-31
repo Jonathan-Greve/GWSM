@@ -22,6 +22,7 @@
       <Filter>GW interaction</Filter>
     </ClCompile>
     <ClCompile Include="ClientDataUpdater.cpp" />
+    <ClCompile Include="string_utils.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="framework.h" />
@@ -44,6 +45,7 @@
       <Filter>GW interaction</Filter>
     </ClInclude>
     <ClInclude Include="ClientDataUpdater.h" />
+    <ClInclude Include="string_utils.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="thread start files">

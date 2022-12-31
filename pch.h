@@ -22,6 +22,7 @@
 // Other stuff
 
 #include "GWIPC.h";
+#include "string_utils.h"
 
 // GWCA includes
 #include "Constants/Maps.h"
@@ -29,14 +30,17 @@
 
 #include "Context/CharContext.h"
 #include "Context/PreGameContext.h"
-#include "Context/MapContext.h"	
+#include "Context/MapContext.h"
 #include "Context/PartyContext.h"
 #include "Context/WorldContext.h"
 #include "Context/AgentContext.h"
+#include "Context/PartyContext.h"
 
 #include "Packets/StoC.h"
 
 #include "GameEntities/Camera.h"
+#include "GameEntities/Agent.h"
+#include "GameEntities/Party.h"
 
 #include "Managers/GameThreadMgr.h"
 #include "Managers/MemoryMgr.h"
@@ -45,6 +49,8 @@
 #include "Managers/MapMgr.h"
 #include "Managers/CameraMgr.h"
 #include "Managers/UIMgr.h"
+#include "Managers/AgentMgr.h"
+#include "Managers/PartyMgr.h"
 
 // My header that depend on GWCA
 #include "ChatWriter.h"
