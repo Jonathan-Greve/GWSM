@@ -60,10 +60,15 @@ private:
         auto character_agent = GW::Agents::GetCharacter();
         flatbuffers::Offset<flatbuffers::Vector<const GWIPC::Effect*>> effects_vector;
         flatbuffers::Offset<flatbuffers::Vector<const GWIPC::Buff*>> buffs_vector;
+        flatbuffers::Offset<flatbuffers::Vector<const GWIPC::Skill*>> skills_vector;
         if (character_agent)
         {
             create_buff_and_effect_vectors(builder, character_agent->agent_id, effects_vector, buffs_vector);
+            create_skills_vector(builder, character_agent->agent_id, skills_vector);
         }
+        GWIPC::SkillbarBuilder skillbar_builder(builder);
+        skillbar_builder.add_skills(skills_vector);
+        auto skillbar = skillbar_builder.Finish();
 
         GWIPC::AgentLivingBuilder agent_living_builder(builder);
         if (character_agent)
@@ -76,7 +81,7 @@ private:
 
         auto agent_living = agent_living_builder.Finish();
 
-        character = GWIPC::CreateCharacter(builder, agent_living, 0, effects_vector, buffs_vector);
+        character = GWIPC::CreateCharacter(builder, agent_living, skillbar, effects_vector, buffs_vector);
     }
 
     void build_agent_living(GW::AgentLiving* living_agent, GWIPC::AgentLivingBuilder& agent_living_builder)
@@ -161,8 +166,8 @@ private:
         }
     }
 
-    void create_skillbar(flatbuffers::FlatBufferBuilder& builder, const uint32_t agent_id,
-                         flatbuffers::Offset<flatbuffers::Vector<const GWIPC::Skill*>>& skills_vector)
+    void create_skills_vector(flatbuffers::FlatBufferBuilder& builder, const uint32_t agent_id,
+                              flatbuffers::Offset<flatbuffers::Vector<const GWIPC::Skill*>>& skills_vector)
     {
         const auto skillbar_array = GW::SkillbarMgr::GetSkillbarArray();
         if (skillbar_array)
@@ -199,7 +204,7 @@ private:
                 for (const auto& hero : player_party->heroes)
                 {
                     flatbuffers::Offset<flatbuffers::Vector<const GWIPC::Skill*>> skills_vector;
-                    create_skillbar(builder, hero.agent_id, skills_vector);
+                    create_skills_vector(builder, hero.agent_id, skills_vector);
 
                     GWIPC::SkillbarBuilder skillbar_builder(builder);
                     skillbar_builder.add_skills(skills_vector);
