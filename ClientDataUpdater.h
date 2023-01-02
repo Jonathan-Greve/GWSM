@@ -74,6 +74,7 @@ private:
         if (character_agent)
         {
             build_agent_living(character_agent, agent_living_builder);
+            agent_living_builder.add_party_slot(get_party_slot_from_agent_id(character_agent->agent_id));
         }
 
         if (! name.IsNull())
@@ -199,6 +200,47 @@ private:
             auto player_party = party_context->player_party;
             if (player_party)
             {
+                std::vector<flatbuffers::Offset<GWIPC::AgentLiving>> players_vector;
+                for (const auto& player : player_party->players)
+                {
+                    flatbuffers::Offset<GWIPC::AgentLiving> agent_living;
+                    auto player_agent = GW::Agents::GetPlayerByID(player.login_number);
+                    if (player_agent)
+                    {
+                        auto player_agent_living = player_agent->GetAsAgentLiving();
+                        if (player_agent_living)
+                        {
+                            GWIPC::AgentLivingBuilder agent_living_builder(builder);
+                            build_agent_living(player_agent_living, agent_living_builder);
+                            agent_living_builder.add_party_slot(
+                              get_party_slot_from_agent_id(player_agent->agent_id));
+
+                            agent_living = agent_living_builder.Finish();
+                        }
+                    }
+                    players_vector.push_back(agent_living);
+                }
+
+                std::vector<flatbuffers::Offset<GWIPC::AgentLiving>> henchmen_vector;
+                for (const auto& henchman : player_party->henchmen)
+                {
+                    flatbuffers::Offset<GWIPC::AgentLiving> agent_living;
+                    auto henchman_agent = GW::Agents::GetAgentByID(henchman.agent_id);
+                    if (henchman_agent)
+                    {
+                        auto henchman_agent_living = henchman_agent->GetAsAgentLiving();
+                        if (henchman_agent_living)
+                        {
+                            GWIPC::AgentLivingBuilder agent_living_builder(builder);
+                            build_agent_living(henchman_agent_living, agent_living_builder);
+                            agent_living_builder.add_party_slot(
+                              get_party_slot_from_agent_id(henchman_agent->agent_id));
+
+                            agent_living = agent_living_builder.Finish();
+                        }
+                    }
+                    henchmen_vector.push_back(agent_living);
+                }
 
                 std::vector<flatbuffers::Offset<GWIPC::Hero>> heroes_vector;
                 for (const auto& hero : player_party->heroes)
@@ -262,10 +304,14 @@ private:
                 }
 
                 auto heroes = builder.CreateVector(heroes_vector);
+                auto players = builder.CreateVector(players_vector);
+                auto henchmen = builder.CreateVector(henchmen_vector);
 
                 GWIPC::PartyBuilder party_builder(builder);
                 party_builder.add_party_id(player_party->party_id);
                 party_builder.add_hero_members(heroes);
+                party_builder.add_player_members(players);
+                party_builder.add_henchman_members(henchmen);
 
                 const auto world_context = GW::GetWorldContext();
                 if (world_context)
