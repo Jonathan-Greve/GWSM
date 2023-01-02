@@ -21,10 +21,13 @@
     <ClCompile Include="ChatWriter.cpp">
       <Filter>GW interaction</Filter>
     </ClCompile>
-    <ClCompile Include="string_utils.cpp" />
     <ClCompile Include="ClientDataUpdater.cpp">
       <Filter>Update functions</Filter>
     </ClCompile>
+    <ClCompile Include="string_utils.cpp">
+      <Filter>Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="AgentUtils.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="framework.h" />
@@ -46,13 +49,16 @@
     <ClInclude Include="ChatWriter.h">
       <Filter>GW interaction</Filter>
     </ClInclude>
-    <ClInclude Include="string_utils.h" />
     <ClInclude Include="ClientDataUpdater.h">
       <Filter>Update functions</Filter>
     </ClInclude>
     <ClInclude Include="UpdateStatus.h">
       <Filter>Update functions</Filter>
     </ClInclude>
+    <ClInclude Include="string_utils.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="AgentUtils.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="thread start files">
@@ -63,6 +69,9 @@
     </Filter>
     <Filter Include="Update functions">
       <UniqueIdentifier>{506fee14-0cee-424f-876e-026c27ffdf87}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Utils">
+      <UniqueIdentifier>{d8c3050d-b623-4385-a25a-44f4bc6c0615}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

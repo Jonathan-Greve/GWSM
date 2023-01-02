@@ -164,6 +164,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="AgentUtils.h" />
     <ClInclude Include="ChatWriter.h" />
     <ClInclude Include="ClientDataUpdater.h" />
     <ClInclude Include="framework.h" />
@@ -178,6 +179,7 @@
     <ClInclude Include="UpdateStatus.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="AgentUtils.cpp" />
     <ClCompile Include="ChatWriter.cpp" />
     <ClCompile Include="ClientDataUpdater.cpp" />
     <ClCompile Include="dllmain.cpp" />
