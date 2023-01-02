@@ -241,6 +241,13 @@ private:
                 party_builder.add_party_id(player_party->party_id);
                 party_builder.add_hero_members(heroes);
 
+                const auto world_context = GW::GetWorldContext();
+                if (world_context)
+                {
+                    const auto& flag = world_context->all_flag;
+                    GWIPC::Vec3 all_flag_pos(flag.x, -flag.z, flag.y);
+                    party_builder.add_flag_all_position(&all_flag_pos);
+                }
                 party = party_builder.Finish();
             }
         }
