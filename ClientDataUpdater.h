@@ -57,9 +57,15 @@ private:
             name = builder.CreateString(char_name.c_str());
         }
 
-        GWIPC::AgentLivingBuilder agent_living_builder(builder);
-
         auto character_agent = GW::Agents::GetCharacter();
+        flatbuffers::Offset<flatbuffers::Vector<const GWIPC::Effect*>> effects_vector;
+        flatbuffers::Offset<flatbuffers::Vector<const GWIPC::Buff*>> buffs_vector;
+        if (character_agent)
+        {
+            create_buff_and_effect_vectors(builder, character_agent->agent_id, effects_vector, buffs_vector);
+        }
+
+        GWIPC::AgentLivingBuilder agent_living_builder(builder);
         if (character_agent)
         {
             build_agent_living(character_agent, agent_living_builder);
@@ -69,7 +75,8 @@ private:
             agent_living_builder.add_name(name);
 
         auto agent_living = agent_living_builder.Finish();
-        character = GWIPC::CreateCharacter(builder, agent_living);
+
+        character = GWIPC::CreateCharacter(builder, agent_living, 0, effects_vector, buffs_vector);
     }
 
     void build_agent_living(GW::AgentLiving* living_agent, GWIPC::AgentLivingBuilder& agent_living_builder)
@@ -117,6 +124,67 @@ private:
         instance = instance_builder.Finish();
     }
 
+    void create_buff_and_effect_vectors(
+      flatbuffers::FlatBufferBuilder& builder, const uint32_t agent_id,
+      flatbuffers::Offset<flatbuffers::Vector<const GWIPC::Effect*>>& effects_vector_out,
+      flatbuffers::Offset<flatbuffers::Vector<const GWIPC::Buff*>>& buffs_vector_out)
+    {
+        const auto agent_effects = GW::Effects::GetAgentEffectsArray(agent_id);
+        if (agent_effects)
+        {
+
+            const auto& effects = agent_effects->effects;
+            if (effects.valid())
+            {
+                std::vector<GWIPC::Effect> effects_vector;
+                for (const auto& effect : effects)
+                {
+                    GWIPC::Effect new_effect((uint32_t)effect.skill_id, effect.agent_id,
+                                             (float)effect.duration);
+                    effects_vector.push_back(new_effect);
+                }
+                effects_vector_out = builder.CreateVectorOfStructs(effects_vector);
+            }
+
+            const auto& buffs = agent_effects->buffs;
+            if (buffs.valid())
+            {
+                std::vector<GWIPC::Buff> buffs_vector;
+                for (const auto& buff : buffs)
+                {
+                    GWIPC::Buff new_buff((uint32_t)buff.skill_id, buff.target_agent_id,
+                                         (uint32_t)buff.buff_id);
+                    buffs_vector.push_back(new_buff);
+                }
+                buffs_vector_out = builder.CreateVectorOfStructs(buffs_vector);
+            }
+        }
+    }
+
+    void create_skillbar(flatbuffers::FlatBufferBuilder& builder, const uint32_t agent_id,
+                         flatbuffers::Offset<flatbuffers::Vector<const GWIPC::Skill*>>& skills_vector)
+    {
+        const auto skillbar_array = GW::SkillbarMgr::GetSkillbarArray();
+        if (skillbar_array)
+        {
+            for (const auto& skillbar : *skillbar_array)
+            {
+                if (skillbar.agent_id == agent_id)
+                {
+                    std::vector<GWIPC::Skill> skills;
+                    for (const auto& skill : skillbar.skills)
+                    {
+                        GWIPC::Skill new_skill((uint16_t)skill.skill_id, (uint16_t)skill.GetRecharge(),
+                                               (uint8_t)skill.adrenaline_a);
+                        skills.push_back(new_skill);
+                    }
+                    skills_vector = builder.CreateVectorOfStructs(skills);
+                    break;
+                }
+            }
+        }
+    }
+
     void build_party(flatbuffers::FlatBufferBuilder& builder, flatbuffers::Offset<GWIPC::Party>& party)
     {
 
@@ -131,26 +199,7 @@ private:
                 for (const auto& hero : player_party->heroes)
                 {
                     flatbuffers::Offset<flatbuffers::Vector<const GWIPC::Skill*>> skills_vector;
-                    const auto skillbar_array = GW::SkillbarMgr::GetSkillbarArray();
-                    if (skillbar_array)
-                    {
-                        for (const auto& hero_skillbar : *skillbar_array)
-                        {
-                            if (hero_skillbar.agent_id == hero.agent_id)
-                            {
-                                std::vector<GWIPC::Skill> skills;
-                                for (const auto& skill : hero_skillbar.skills)
-                                {
-                                    GWIPC::Skill new_skill((uint16_t)skill.skill_id,
-                                                           (uint16_t)skill.GetRecharge(),
-                                                           (uint8_t)skill.adrenaline_a);
-                                    skills.push_back(new_skill);
-                                }
-                                skills_vector = builder.CreateVectorOfStructs(skills);
-                                break;
-                            }
-                        }
-                    }
+                    create_skillbar(builder, hero.agent_id, skills_vector);
 
                     GWIPC::SkillbarBuilder skillbar_builder(builder);
                     skillbar_builder.add_skills(skills_vector);
@@ -158,36 +207,8 @@ private:
 
                     flatbuffers::Offset<flatbuffers::Vector<const GWIPC::Effect*>> hero_effects_vector;
                     flatbuffers::Offset<flatbuffers::Vector<const GWIPC::Buff*>> hero_buffs_vector;
-                    const auto agent_effects = GW::Effects::GetAgentEffectsArray(hero.agent_id);
-                    if (agent_effects)
-                    {
-
-                        const auto& effects = agent_effects->effects;
-                        if (effects.valid())
-                        {
-                            std::vector<GWIPC::Effect> effects_vector;
-                            for (const auto& effect : effects)
-                            {
-                                GWIPC::Effect new_effect((uint32_t)effect.skill_id, effect.agent_id,
-                                                         (float)effect.duration);
-                                effects_vector.push_back(new_effect);
-                            }
-                            hero_effects_vector = builder.CreateVectorOfStructs(effects_vector);
-                        }
-
-                        const auto& buffs = agent_effects->buffs;
-                        if (buffs.valid())
-                        {
-                            std::vector<GWIPC::Buff> buffs_vector;
-                            for (const auto& buff : buffs)
-                            {
-                                GWIPC::Buff new_buff((uint32_t)buff.skill_id, buff.target_agent_id,
-                                                     (uint32_t)buff.buff_id);
-                                buffs_vector.push_back(new_buff);
-                            }
-                            hero_buffs_vector = builder.CreateVectorOfStructs(buffs_vector);
-                        }
-                    }
+                    create_buff_and_effect_vectors(builder, hero.agent_id, hero_effects_vector,
+                                                   hero_buffs_vector);
 
                     flatbuffers::Offset<GWIPC::AgentLiving> agent_living;
                     auto hero_agent = GW::Agents::GetAgentByID(hero.agent_id);
