@@ -22,7 +22,7 @@ void GWSM::Init()
 
     if (keyboard_hook_handle == NULL)
     {
-        ChatWriter::WriteIngameDebugChat("Init: Failed setting keyboard hook.");
+        ChatWriter::WriteIngameDebugChat("Init: Failed setting keyboard hook.", ChatColor::DarkRed);
         Terminate();
     }
 
