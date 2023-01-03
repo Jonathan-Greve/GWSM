@@ -43,6 +43,7 @@ public:
 
 private:
     GWIPC::SharedMemory shared_memory_;
+    std::unordered_map<uint32_t, std::wstring> mission_objectives_strs_;
 
     void build_character(flatbuffers::FlatBufferBuilder& builder,
                          flatbuffers::Offset<GWIPC::Character>& character)
@@ -307,19 +308,59 @@ private:
                 auto players = builder.CreateVector(players_vector);
                 auto henchmen = builder.CreateVector(henchmen_vector);
 
+                std::vector<flatbuffers::Offset<GWIPC::MissionObjective>> mission_objective_vector;
+                const auto world_context = GW::GetWorldContext();
+                if (world_context)
+                {
+                    const auto& mission_objectives = world_context->mission_objectives;
+                    if (mission_objectives.valid())
+                    {
+                        for (const auto& mission_objective : mission_objectives)
+                        {
+                            const auto it = mission_objectives_strs_.find(mission_objective.objective_id);
+                            if (it != mission_objectives_strs_.end())
+                            {
+                                if (it->second != L"")
+                                {
+                                    auto description = builder.CreateString(wstr_to_str(it->second.c_str()));
+
+                                    auto mission_objective_builder = GWIPC::MissionObjectiveBuilder(builder);
+                                    mission_objective_builder.add_objective_id(
+                                      mission_objective.objective_id);
+                                    mission_objective_builder.add_description(description);
+                                    mission_objective_builder.add_type(mission_objective.type);
+
+                                    auto new_mission_objective = mission_objective_builder.Finish();
+
+                                    mission_objective_vector.emplace_back(new_mission_objective);
+                                }
+                            }
+                            else
+                            {
+                                auto insert_it =
+                                  mission_objectives_strs_.insert({mission_objective.objective_id, L""});
+                                GW::UI::AsyncDecodeStr(mission_objective.enc_str, &(*insert_it.first).second);
+                            }
+                        }
+                    }
+                }
+
+                auto mission_objectives = builder.CreateVector(mission_objective_vector);
+
                 GWIPC::PartyBuilder party_builder(builder);
                 party_builder.add_party_id(player_party->party_id);
                 party_builder.add_hero_members(heroes);
                 party_builder.add_player_members(players);
                 party_builder.add_henchman_members(henchmen);
+                party_builder.add_mission_objectives(mission_objectives);
 
-                const auto world_context = GW::GetWorldContext();
                 if (world_context)
                 {
                     const auto& flag = world_context->all_flag;
                     GWIPC::Vec3 all_flag_pos(flag.x, -flag.z, flag.y);
                     party_builder.add_flag_all_position(&all_flag_pos);
                 }
+
                 party = party_builder.Finish();
             }
         }

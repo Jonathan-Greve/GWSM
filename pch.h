@@ -46,6 +46,7 @@
 #include "GameEntities/Party.h"
 #include "GameEntities/Skill.h"
 #include "GameEntities/Hero.h"
+#include "GameEntities/Quest.h"
 
 #include "Managers/GameThreadMgr.h"
 #include "Managers/MemoryMgr.h"
