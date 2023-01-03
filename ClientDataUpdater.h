@@ -27,9 +27,12 @@ public:
         flatbuffers::Offset<GWIPC::Party> party;
         build_party(builder, party);
 
+        flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<GWIPC::Quest>>> quests;
+        build_quests(builder, quests);
+
         // Create the ClientData object
         auto client_data =
-          GWIPC::CreateClientData(builder, character, instance, party, update_status.game_state);
+          GWIPC::CreateClientData(builder, character, instance, party, update_status.game_state, quests);
 
         // Finish creating the flatbuffer and retrieve a pointer to the buffer
         builder.Finish(client_data);
@@ -44,6 +47,18 @@ public:
 private:
     GWIPC::SharedMemory shared_memory_;
     std::unordered_map<uint32_t, std::wstring> mission_objectives_strs_;
+
+    struct QuestStrings
+    {
+        std::wstring location = L"";
+        std::wstring name = L"";
+        std::wstring npc_name = L"";
+        std::wstring description = L"";
+        std::wstring objectives = L"";
+    };
+
+    // quest_id = > QuestString;
+    std::unordered_map<uint32_t, QuestStrings> quest_strs_;
 
     void build_character(flatbuffers::FlatBufferBuilder& builder,
                          flatbuffers::Offset<GWIPC::Character>& character)
@@ -338,7 +353,7 @@ private:
                             else
                             {
                                 auto insert_it =
-                                  mission_objectives_strs_.insert({mission_objective.objective_id, L""});
+                                  mission_objectives_strs_.emplace(mission_objective.objective_id, L"");
                                 GW::UI::AsyncDecodeStr(mission_objective.enc_str, &(*insert_it.first).second);
                             }
                         }
@@ -362,6 +377,67 @@ private:
                 }
 
                 party = party_builder.Finish();
+            }
+        }
+    }
+
+    void build_quests(flatbuffers::FlatBufferBuilder& builder,
+                      flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<GWIPC::Quest>>>& quests)
+    {
+        const auto world_context = GW::GetWorldContext();
+        if (world_context)
+        {
+            const auto& quest_log = world_context->quest_log;
+            if (quest_log.valid())
+            {
+                std::vector<flatbuffers::Offset<GWIPC::Quest>> quests_vector;
+                for (const auto& quest : quest_log)
+                {
+                    const auto it = quest_strs_.find((uint32_t)quest.quest_id);
+                    if (it != quest_strs_.end())
+                    {
+                        if (it->second.description != L"" && it->second.name != L"")
+                        {
+                            auto description =
+                              builder.CreateString(wstr_to_str(it->second.description.c_str()));
+                            auto location = builder.CreateString(wstr_to_str(it->second.name.c_str()));
+                            auto name = builder.CreateString(wstr_to_str(it->second.location.c_str()));
+                            auto npc_name = builder.CreateString(wstr_to_str(it->second.npc_name.c_str()));
+                            auto objectives =
+                              builder.CreateString(wstr_to_str(it->second.objectives.c_str()));
+                            GWIPC::Vec3 marker(quest.marker.x, -quest.marker.z, quest.marker.y);
+
+                            GWIPC::QuestBuilder quest_builder(builder);
+                            quest_builder.add_description(description);
+                            quest_builder.add_location(location);
+                            quest_builder.add_log_state(quest.log_state);
+                            quest_builder.add_map_from(quest.map_from);
+                            quest_builder.add_map_to((uint32_t)quest.map_to);
+                            quest_builder.add_marker(&marker);
+                            quest_builder.add_name(name);
+                            quest_builder.add_npc_name(npc_name);
+                            quest_builder.add_objectives(objectives);
+                            quest_builder.add_quest_id((uint32_t)quest.quest_id);
+
+                            auto new_quest = quest_builder.Finish();
+
+                            quests_vector.emplace_back(new_quest);
+                        }
+                    }
+                    else
+                    {
+                        if (quest.description && quest.location && quest.name && quest.npc &&
+                            quest.objectives)
+                        {
+                            auto insert_it = quest_strs_.emplace((uint32_t)quest.quest_id, QuestStrings());
+                            GW::UI::AsyncDecodeStr(quest.description, &(*insert_it.first).second.description);
+                            GW::UI::AsyncDecodeStr(quest.location, &(*insert_it.first).second.location);
+                            GW::UI::AsyncDecodeStr(quest.name, &(*insert_it.first).second.name);
+                            GW::UI::AsyncDecodeStr(quest.npc, &(*insert_it.first).second.npc_name);
+                            GW::UI::AsyncDecodeStr(quest.objectives, &(*insert_it.first).second.objectives);
+                        }
+                    }
+                }
             }
         }
     }
