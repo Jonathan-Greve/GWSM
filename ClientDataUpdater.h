@@ -143,6 +143,12 @@ private:
             instance_builder.add_map_id(character_context->map_id);
         }
 
+        auto instance_type = GW::Map::GetInstanceType();
+        if (instance_type != GW::Constants::InstanceType::Loading)
+        {
+            instance_builder.add_map_instance_type(static_cast<GWIPC::MapInstanceType>(instance_type));
+        }
+
         instance = instance_builder.Finish();
     }
 
