@@ -98,7 +98,10 @@ private:
 
         auto agent_living = agent_living_builder.Finish();
 
-        character = GWIPC::CreateCharacter(builder, agent_living, skillbar, effects_vector, buffs_vector);
+        const auto target_agent_id = GW::Agents::GetTargetId();
+
+        character = GWIPC::CreateCharacter(builder, agent_living, skillbar, effects_vector, buffs_vector,
+                                           target_agent_id);
     }
 
     void build_agent_living(GW::AgentLiving* living_agent, GWIPC::AgentLivingBuilder& agent_living_builder)
