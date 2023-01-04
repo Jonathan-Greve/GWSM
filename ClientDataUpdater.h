@@ -522,6 +522,7 @@ private:
                                 bag_item_builder.add_quantity(item->quantity);
                                 bag_item_builder.add_type(item->type);
                                 bag_item_builder.add_value(item->value);
+                                bag_item_builder.add_index(item_index);
 
                                 auto new_bag_item = bag_item_builder.Finish();
 
