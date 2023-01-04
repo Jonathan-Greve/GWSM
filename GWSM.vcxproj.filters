@@ -27,7 +27,10 @@
     <ClCompile Include="string_utils.cpp">
       <Filter>Utils</Filter>
     </ClCompile>
-    <ClCompile Include="AgentUtils.cpp" />
+    <ClCompile Include="AgentUtils.cpp">
+      <Filter>Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="bag_and_item_utils.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="framework.h" />
@@ -58,7 +61,10 @@
     <ClInclude Include="string_utils.h">
       <Filter>Utils</Filter>
     </ClInclude>
-    <ClInclude Include="AgentUtils.h" />
+    <ClInclude Include="AgentUtils.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="bag_and_item_utils.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="thread start files">

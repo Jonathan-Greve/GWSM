@@ -30,9 +30,15 @@ public:
         flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<GWIPC::Quest>>> quests;
         build_quests(builder, quests);
 
+        flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<GWIPC::Bag>>> bags;
+        build_bags(builder, bags);
+
+        flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<GWIPC::BagItem>>> equipped_items;
+        build_equipped_items(builder, equipped_items);
+
         // Create the ClientData object
-        auto client_data =
-          GWIPC::CreateClientData(builder, character, instance, party, update_status.game_state, quests);
+        auto client_data = GWIPC::CreateClientData(builder, character, instance, party,
+                                                   update_status.game_state, quests, bags, equipped_items);
 
         // Finish creating the flatbuffer and retrieve a pointer to the buffer
         builder.Finish(client_data);
@@ -46,7 +52,6 @@ public:
 
 private:
     GWIPC::SharedMemory shared_memory_;
-    std::unordered_map<uint32_t, std::wstring> mission_objectives_strs_;
 
     struct QuestStrings
     {
@@ -57,8 +62,20 @@ private:
         std::wstring objectives = L"";
     };
 
-    // quest_id = > QuestString;
+    struct BagItemStrings
+    {
+        std::wstring name = L"";
+        std::wstring single_item_name = L"";
+        std::wstring full_name = L"";
+        std::wstring description = L"";
+    };
+
+    // objective_id => wstring;
+    std::unordered_map<uint32_t, std::wstring> mission_objectives_strs_;
+    // quest_id => QuestString;
     std::unordered_map<uint32_t, QuestStrings> quest_strs_;
+    // (model_id, mod) => BagItemStrings;
+    std::map<std::pair<uint32_t, uint32_t>, BagItemStrings> bag_item_strs_;
 
     void build_character(flatbuffers::FlatBufferBuilder& builder,
                          flatbuffers::Offset<GWIPC::Character>& character)
@@ -447,7 +464,123 @@ private:
                         }
                     }
                 }
+
+                quests = builder.CreateVector(quests_vector);
             }
+        }
+    }
+    uint32_t create_bag_item(flatbuffers::FlatBufferBuilder& builder, GW::Bag** const& bag_array,
+                             const uint32_t& bag_index,
+                             std::vector<flatbuffers::Offset<GWIPC::BagItem>>& bag_items_vector)
+    {
+        uint32_t bag_size = 0;
+        const auto bag = bag_array[bag_index];
+        if (bag && bag->IsInventoryBag())
+        {
+            const auto& items = bag->items;
+            if (items.valid())
+            {
+                bag_size = items.size();
+                for (uint32_t item_index = 0; item_index < items.size(); item_index++)
+                {
+                    auto item = items[item_index];
+                    if (! item)
+                    {
+                        // GetItemBySlot uses 1-index so we add 1;
+                        item = GW::Items::GetItemBySlot(bag_index, item_index + 1);
+                    }
+                    if (item)
+                    {
+                        std::pair<uint32_t, uint32_t> key(item->model_id, item->mod_struct->mod);
+                        const auto it = bag_item_strs_.find(key);
+                        if (it != bag_item_strs_.end())
+                        {
+                            if (it->second.description != L"" && it->second.full_name != L"" &&
+                                it->second.name != L"" && it->second.single_item_name != L"")
+                            {
+                                auto description =
+                                  builder.CreateString(wstr_to_str(it->second.description.c_str()));
+                                auto full_name =
+                                  builder.CreateString(wstr_to_str(it->second.full_name.c_str()));
+                                auto single_item_name =
+                                  builder.CreateString(wstr_to_str(it->second.single_item_name.c_str()));
+                                auto name = builder.CreateString(wstr_to_str(it->second.name.c_str()));
+
+                                auto bag_item_builder = GWIPC::BagItemBuilder(builder);
+                                bag_item_builder.add_description(description);
+                                bag_item_builder.add_full_name(full_name);
+                                bag_item_builder.add_name(name);
+                                bag_item_builder.add_single_item_name(single_item_name);
+                                bag_item_builder.add_interaction(item->interaction);
+                                bag_item_builder.add_is_weapon_set_item(is_weapon_set_item(item));
+                                bag_item_builder.add_item_id(item->item_id);
+                                if (item->mod_struct)
+                                {
+                                    bag_item_builder.add_item_modifier(item->mod_struct->mod);
+                                }
+                                bag_item_builder.add_model_id(item->model_id);
+                                bag_item_builder.add_quantity(item->quantity);
+                                bag_item_builder.add_type(item->type);
+                                bag_item_builder.add_value(item->value);
+
+                                auto new_bag_item = bag_item_builder.Finish();
+
+                                bag_items_vector.emplace_back(new_bag_item);
+                            }
+                        }
+                        else
+                        {
+                            auto insert_it = bag_item_strs_.emplace(key, BagItemStrings());
+                            GW::UI::AsyncDecodeStr(item->info_string, &(*insert_it.first).second.description);
+                            GW::UI::AsyncDecodeStr(item->complete_name_enc,
+                                                   &(*insert_it.first).second.full_name);
+                            GW::UI::AsyncDecodeStr(item->name_enc, &(*insert_it.first).second.name);
+                            GW::UI::AsyncDecodeStr(item->single_item_name,
+                                                   &(*insert_it.first).second.single_item_name);
+                        }
+                    }
+                }
+            }
+        }
+        return bag_size;
+    }
+
+    void build_bags(flatbuffers::FlatBufferBuilder& builder,
+                    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<GWIPC::Bag>>>& bags)
+    {
+        const auto bag_array = GW::Items::GetBagArray();
+        if (bag_array)
+        {
+            std::vector<flatbuffers::Offset<GWIPC::Bag>> bags_vector;
+            std::vector<flatbuffers::Offset<GWIPC::BagItem>> bag_items_vector;
+            for (uint32_t bag_index = 1; bag_index <= 5; bag_index++)
+            {
+                const auto bag_size = create_bag_item(builder, bag_array, bag_index, bag_items_vector);
+
+                auto bag_items = builder.CreateVector(bag_items_vector);
+                GWIPC::BagBuilder bag_builder(builder);
+                bag_builder.add_items(bag_items);
+                bag_builder.add_bag_size(static_cast<uint8_t>(bag_size));
+
+                auto new_bag = bag_builder.Finish();
+                bags_vector.emplace_back(new_bag);
+            }
+            bags = builder.CreateVector(bags_vector);
+        }
+    }
+
+    void build_equipped_items(
+      flatbuffers::FlatBufferBuilder& builder,
+      flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<GWIPC::BagItem>>>& bag_items)
+    {
+        const auto bag_array = GW::Items::GetBagArray();
+        if (bag_array)
+        {
+            constexpr uint32_t equipment_bag_index = 22;
+            std::vector<flatbuffers::Offset<GWIPC::BagItem>> bag_items_vector;
+            const auto bag_size = create_bag_item(builder, bag_array, equipment_bag_index, bag_items_vector);
+
+            bag_items = builder.CreateVector(bag_items_vector);
         }
     }
 };

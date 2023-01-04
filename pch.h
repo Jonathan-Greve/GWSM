@@ -38,6 +38,8 @@
 #include "Context/AgentContext.h"
 #include "Context/PartyContext.h"
 #include "Context/GameContext.h"
+#include "Context/ItemContext.h"
+#include "Context/TradeContext.h"
 
 #include "Packets/StoC.h"
 
@@ -47,6 +49,8 @@
 #include "GameEntities/Skill.h"
 #include "GameEntities/Hero.h"
 #include "GameEntities/Quest.h"
+#include "GameEntities/Item.h"
+#include "GameEntities/Guild.h"
 
 #include "Managers/GameThreadMgr.h"
 #include "Managers/MemoryMgr.h"
@@ -59,7 +63,9 @@
 #include "Managers/PartyMgr.h"
 #include "Managers/EffectMgr.h"
 #include "Managers/SkillbarMgr.h"
+#include "Managers/ItemMgr.h"
 
+#include "bag_and_item_utils.h"
 // My header that depend on GWCA
 #include "ChatWriter.h"
 
