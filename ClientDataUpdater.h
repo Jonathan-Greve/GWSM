@@ -8,6 +8,7 @@ public:
     ClientDataUpdater(std::string email)
         : shared_memory_(email, GWIPC::CLIENTDATA_SIZE)
         , builder_(GWIPC::CLIENTDATA_SIZE)
+        , buffer_(GWIPC::CLIENTDATA_SIZE)
     {
     }
 
@@ -31,8 +32,67 @@ public:
         flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<GWIPC::Quest>>> quests;
         build_quests(builder_, quests);
 
+        // Sets the 5 bags (regular bags 1-4 + equipment bag).
+        // Tries to use the previous flatbuffer as a cache for the bag items.
+        // This is because it is very slow to rebuild from scratch.
         flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<GWIPC::Bag>>> bags;
-        build_bags(builder_, bags);
+        // Check the elapsed time since build_bags was last called
+        auto current_time = std::chrono::system_clock::now();
+        auto elapsed_time =
+          std::chrono::duration_cast<std::chrono::seconds>(current_time - last_build_bags_time_).count();
+        if (buffer_.empty() || elapsed_time > 2)
+        {
+            build_bags(builder_, bags);
+            last_build_bags_time_ = std::chrono::system_clock::now();
+        }
+        else
+        {
+            const auto client_data = GWIPC::GetClientData(buffer_.data());
+            if (client_data)
+            {
+                const auto cached_bags = client_data->bags();
+                if (cached_bags)
+                {
+                    for (uint32_t i = 0; i < cached_bags->size(); i++)
+                    {
+                        std::vector<flatbuffers::Offset<GWIPC::Bag>> bags_vector;
+                        const GWIPC::Bag* bag = cached_bags->Get(i);
+                        if (bag)
+                        {
+                            auto items = bag->items();
+                            if (items)
+                            {
+                                std::vector<flatbuffers::Offset<GWIPC::BagItem>> bag_items_vector;
+                                for (uint32_t j = 0; j < items->size(); j++)
+                                {
+                                    auto item = items->Get(j);
+                                    if (item)
+                                    {
+
+                                        auto new_bag_item = create_bag_item_from_values(
+                                          builder_, item->description()->str(), item->full_name()->str(),
+                                          item->single_item_name()->str(), item->name()->str(),
+                                          item->interaction(), item->is_weapon_set_item(), item->item_id(),
+                                          item->item_modifier(), item->model_id(), item->quantity(),
+                                          item->type(), item->value(), item->index());
+
+                                        bag_items_vector.emplace_back(new_bag_item);
+                                    }
+                                }
+                                auto bag_items = builder_.CreateVector(bag_items_vector);
+                                GWIPC::BagBuilder bag_builder(builder_);
+                                bag_builder.add_items(bag_items);
+                                bag_builder.add_bag_size(static_cast<uint8_t>(bag->bag_size()));
+
+                                auto new_bag = bag_builder.Finish();
+                                bags_vector.emplace_back(new_bag);
+                            }
+                        }
+                        bags = builder_.CreateVector(bags_vector);
+                    }
+                }
+            }
+        }
 
         flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<GWIPC::BagItem>>> equipped_items;
         build_equipped_items(builder_, equipped_items);
@@ -45,16 +105,20 @@ public:
         builder_.Finish(client_data);
 
         // Get pointer to buffer and size
-        uint8_t* buf = builder_.GetBufferPointer();
+        buffer_ =
+          std::vector<uint8_t>(builder_.GetBufferPointer(), builder_.GetBufferPointer() + builder_.GetSize());
         int size = builder_.GetSize();
 
-        shared_memory_.write_data(buf, size);
+        shared_memory_.write_data(buffer_.data(), size);
     }
 
 private:
     GWIPC::SharedMemory shared_memory_;
 
     flatbuffers::FlatBufferBuilder builder_;
+
+    std::vector<uint8_t> buffer_;
+    std::chrono::time_point<std::chrono::system_clock> last_build_bags_time_;
 
     struct QuestStrings
     {
@@ -501,33 +565,14 @@ private:
                             if (it->second.description != L"" && it->second.full_name != L"" &&
                                 it->second.name != L"" && it->second.single_item_name != L"")
                             {
-                                auto description =
-                                  builder.CreateString(wstr_to_str(it->second.description.c_str()));
-                                auto full_name =
-                                  builder.CreateString(wstr_to_str(it->second.full_name.c_str()));
-                                auto single_item_name =
-                                  builder.CreateString(wstr_to_str(it->second.single_item_name.c_str()));
-                                auto name = builder.CreateString(wstr_to_str(it->second.name.c_str()));
-
-                                auto bag_item_builder = GWIPC::BagItemBuilder(builder);
-                                bag_item_builder.add_description(description);
-                                bag_item_builder.add_full_name(full_name);
-                                bag_item_builder.add_name(name);
-                                bag_item_builder.add_single_item_name(single_item_name);
-                                bag_item_builder.add_interaction(item->interaction);
-                                bag_item_builder.add_is_weapon_set_item(is_weapon_set_item(item));
-                                bag_item_builder.add_item_id(item->item_id);
-                                if (item->mod_struct)
-                                {
-                                    bag_item_builder.add_item_modifier(item->mod_struct->mod);
-                                }
-                                bag_item_builder.add_model_id(item->model_id);
-                                bag_item_builder.add_quantity(item->quantity);
-                                bag_item_builder.add_type(item->type);
-                                bag_item_builder.add_value(item->value);
-                                bag_item_builder.add_index(item_index);
-
-                                auto new_bag_item = bag_item_builder.Finish();
+                                auto new_bag_item = create_bag_item_from_values(
+                                  builder, wstr_to_str(it->second.description.c_str()),
+                                  wstr_to_str(it->second.full_name.c_str()),
+                                  wstr_to_str(it->second.single_item_name.c_str()),
+                                  wstr_to_str(it->second.name.c_str()), item->interaction,
+                                  is_weapon_set_item(item), item->item_id,
+                                  item->mod_struct ? item->mod_struct->mod : 0, item->model_id,
+                                  item->quantity, item->type, item->value, item_index);
 
                                 bag_items_vector.emplace_back(new_bag_item);
                             }
@@ -586,5 +631,34 @@ private:
 
             bag_items = builder.CreateVector(bag_items_vector);
         }
+    }
+
+    flatbuffers::Offset<GWIPC::BagItem> create_bag_item_from_values(
+      flatbuffers::FlatBufferBuilder& builder_, const std::string& description, const std::string& full_name,
+      const std::string& single_item_name, const std::string& name, int interaction, bool is_weapon_set_item,
+      int item_id, int item_modifier, int model_id, int quantity, int type, int value, int index)
+    {
+        auto description_offset = builder_.CreateString(description);
+        auto full_name_offset = builder_.CreateString(full_name);
+        auto single_item_name_offset = builder_.CreateString(single_item_name);
+        auto name_offset = builder_.CreateString(name);
+
+        GWIPC::BagItemBuilder bag_item_builder(builder_);
+        bag_item_builder.add_description(description_offset);
+        bag_item_builder.add_full_name(full_name_offset);
+        bag_item_builder.add_name(name_offset);
+        bag_item_builder.add_single_item_name(single_item_name_offset);
+
+        bag_item_builder.add_interaction(interaction);
+        bag_item_builder.add_is_weapon_set_item(is_weapon_set_item);
+        bag_item_builder.add_item_id(item_id);
+        bag_item_builder.add_item_modifier(item_modifier);
+        bag_item_builder.add_model_id(model_id);
+        bag_item_builder.add_quantity(quantity);
+        bag_item_builder.add_type(type);
+        bag_item_builder.add_value(value);
+        bag_item_builder.add_index(index);
+
+        return bag_item_builder.Finish();
     }
 };
