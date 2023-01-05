@@ -7,51 +7,54 @@ class ClientDataUpdater
 public:
     ClientDataUpdater(std::string email)
         : shared_memory_(email, GWIPC::CLIENTDATA_SIZE)
+        , builder_(GWIPC::CLIENTDATA_SIZE)
     {
     }
 
     void update(UpdateStatus update_status)
     {
         // Create a flatbuffer builder object
-        flatbuffers::FlatBufferBuilder builder(GWIPC::CLIENTDATA_SIZE);
+        builder_.Clear();
 
         // Create the Character object
         flatbuffers::Offset<GWIPC::Character> character;
-        build_character(builder, character);
+        build_character(builder_, character);
 
         // Create the Instance object
         flatbuffers::Offset<GWIPC::Instance> instance;
-        build_instance(builder, instance);
+        build_instance(builder_, instance);
 
         // Create the Party object
         flatbuffers::Offset<GWIPC::Party> party;
-        build_party(builder, party);
+        build_party(builder_, party);
 
         flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<GWIPC::Quest>>> quests;
-        build_quests(builder, quests);
+        build_quests(builder_, quests);
 
         flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<GWIPC::Bag>>> bags;
-        build_bags(builder, bags);
+        build_bags(builder_, bags);
 
         flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<GWIPC::BagItem>>> equipped_items;
-        build_equipped_items(builder, equipped_items);
+        build_equipped_items(builder_, equipped_items);
 
         // Create the ClientData object
-        auto client_data = GWIPC::CreateClientData(builder, character, instance, party,
+        auto client_data = GWIPC::CreateClientData(builder_, character, instance, party,
                                                    update_status.game_state, quests, bags, equipped_items);
 
         // Finish creating the flatbuffer and retrieve a pointer to the buffer
-        builder.Finish(client_data);
+        builder_.Finish(client_data);
 
         // Get pointer to buffer and size
-        uint8_t* buf = builder.GetBufferPointer();
-        int size = builder.GetSize();
+        uint8_t* buf = builder_.GetBufferPointer();
+        int size = builder_.GetSize();
 
         shared_memory_.write_data(buf, size);
     }
 
 private:
     GWIPC::SharedMemory shared_memory_;
+
+    flatbuffers::FlatBufferBuilder builder_;
 
     struct QuestStrings
     {
