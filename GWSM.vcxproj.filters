@@ -34,6 +34,9 @@
     <ClCompile Include="ItemCallbacks.cpp">
       <Filter>Packet callbacks</Filter>
     </ClCompile>
+    <ClCompile Include="QuestCallbacks.cpp">
+      <Filter>Packet callbacks</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="framework.h" />
@@ -69,6 +72,9 @@
     </ClInclude>
     <ClInclude Include="bag_and_item_utils.h" />
     <ClInclude Include="ItemCallbacks.h">
+      <Filter>Packet callbacks</Filter>
+    </ClInclude>
+    <ClInclude Include="QuestCallbacks.h">
       <Filter>Packet callbacks</Filter>
     </ClInclude>
   </ItemGroup>

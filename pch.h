@@ -69,5 +69,6 @@
 // My header that depend on GWCA
 #include "ChatWriter.h"
 #include "ItemCallbacks.h"
+#include "QuestCallbacks.h"
 
 #endif //PCH_H

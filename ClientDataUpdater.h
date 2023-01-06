@@ -12,8 +12,9 @@ public:
     {
     }
 
-    void update(UpdateStatus update_status, bool inventory_or_equipment_changed)
+    void update(UpdateStatus update_status, bool inventory_or_equipment_changed, bool quests_changed)
     {
+        const auto quests_decoding_size = current_quest_strs_decoding.size();
         const auto bag_items_decoding_size = current_bag_item_strs_decoding.size();
 
         // Create a flatbuffer builder object
@@ -32,19 +33,70 @@ public:
         build_party(builder_, party);
 
         flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<GWIPC::Quest>>> quests;
-        build_quests(builder_, quests);
+        auto current_time = std::chrono::system_clock::now();
+        auto elapsed_time =
+          std::chrono::duration_cast<std::chrono::seconds>(current_time - last_build_quests_time_).count();
+        if (buffer_.empty() || quests_changed || quests_decoding_size > 0 || elapsed_time >= 60)
+        {
+            if (quests_changed)
+            {
+                quest_strs_.clear();
+            }
+
+            build_quests(builder_, quests);
+            last_build_quests_time_ = std::chrono::system_clock::now();
+        }
+        else
+        {
+            const auto client_data = GWIPC::GetClientData(buffer_.data());
+            if (client_data)
+            {
+                auto cached_quests = client_data->quests();
+                if (cached_quests)
+                {
+                    std::vector<flatbuffers::Offset<GWIPC::Quest>> quests_vector;
+                    for (uint32_t i = 0; i < cached_quests->size(); i++)
+                    {
+                        auto cached_quest = cached_quests->Get(i);
+                        if (cached_quest)
+                        {
+                            GWIPC::Vec3 marker;
+                            if (cached_quest->marker())
+                            {
+                                marker = GWIPC::Vec3(cached_quest->marker()->x(), cached_quest->marker()->y(),
+                                                     cached_quest->marker()->z());
+                            }
+
+                            auto new_quest = create_quest_from_values(
+                              builder_, cached_quest->description()->str(), cached_quest->location()->str(),
+                              cached_quest->name()->str(), cached_quest->npc_name()->str(),
+                              cached_quest->objectives()->str(), cached_quest->log_state(),
+                              cached_quest->map_from(), cached_quest->map_to(), marker,
+                              cached_quest->quest_id());
+
+                            quests_vector.emplace_back(new_quest);
+                        }
+                    }
+                    quests = builder_.CreateVector(quests_vector);
+                }
+            }
+        }
 
         // Sets the 5 bags (regular bags 1-4 + equipment bag).
         // Tries to use the previous flatbuffer as a cache for the bag items.
         // This is because it is very slow to rebuild from scratch.
         flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<GWIPC::Bag>>> bags;
         // Check the elapsed time since build_bags was last called
-        auto current_time = std::chrono::system_clock::now();
-        auto elapsed_time =
+        elapsed_time =
           std::chrono::duration_cast<std::chrono::seconds>(current_time - last_build_bags_time_).count();
         if (buffer_.empty() || inventory_or_equipment_changed || bag_items_decoding_size > 0 ||
             elapsed_time >= 60)
         {
+            if (inventory_or_equipment_changed)
+            {
+                bag_item_strs_.clear();
+            }
+
             build_bags(builder_, bags);
             last_build_bags_time_ = std::chrono::system_clock::now();
         }
@@ -148,6 +200,11 @@ public:
         int size = builder_.GetSize();
 
         shared_memory_.write_data(buffer_.data(), size);
+
+        if (update_status.game_state != GWIPC::GameState_InGame)
+        {
+            buffer_.clear();
+        }
     }
 
 private:
@@ -156,6 +213,7 @@ private:
     flatbuffers::FlatBufferBuilder builder_;
 
     std::vector<uint8_t> buffer_;
+    std::chrono::time_point<std::chrono::system_clock> last_build_quests_time_;
     std::chrono::time_point<std::chrono::system_clock> last_build_bags_time_;
     std::chrono::time_point<std::chrono::system_clock> last_build_equipped_items_time_;
 
@@ -180,6 +238,7 @@ private:
     std::unordered_map<uint32_t, std::wstring> mission_objectives_strs_;
     // quest_id => QuestString;
     std::unordered_map<uint32_t, QuestStrings> quest_strs_;
+    std::set<uint32_t> current_quest_strs_decoding;
     // (model_id, mod) => BagItemStrings;
     std::map<std::pair<uint32_t, uint32_t>, BagItemStrings> bag_item_strs_;
     std::set<std::pair<uint32_t, uint32_t>> current_bag_item_strs_decoding;
@@ -526,48 +585,52 @@ private:
                 std::vector<flatbuffers::Offset<GWIPC::Quest>> quests_vector;
                 for (const auto& quest : quest_log)
                 {
-                    const auto it = quest_strs_.find((uint32_t)quest.quest_id);
+                    auto key = (uint32_t)quest.quest_id;
+                    const auto it = quest_strs_.find(key);
                     if (it != quest_strs_.end())
                     {
-                        if (it->second.description != L"" && it->second.name != L"")
+                        if (it->second.location != L"" && it->second.name != L"" &&
+                            it->second.npc_name != L"")
                         {
-                            auto description =
-                              builder.CreateString(wstr_to_str(it->second.description.c_str()));
-                            auto location = builder.CreateString(wstr_to_str(it->second.name.c_str()));
-                            auto name = builder.CreateString(wstr_to_str(it->second.location.c_str()));
-                            auto npc_name = builder.CreateString(wstr_to_str(it->second.npc_name.c_str()));
-                            auto objectives =
-                              builder.CreateString(wstr_to_str(it->second.objectives.c_str()));
+                            current_quest_strs_decoding.erase(key);
+
                             GWIPC::Vec3 marker(quest.marker.x, -quest.marker.z, quest.marker.y);
 
-                            GWIPC::QuestBuilder quest_builder(builder);
-                            quest_builder.add_description(description);
-                            quest_builder.add_location(location);
-                            quest_builder.add_log_state(quest.log_state);
-                            quest_builder.add_map_from(quest.map_from);
-                            quest_builder.add_map_to((uint32_t)quest.map_to);
-                            quest_builder.add_marker(&marker);
-                            quest_builder.add_name(name);
-                            quest_builder.add_npc_name(npc_name);
-                            quest_builder.add_objectives(objectives);
-                            quest_builder.add_quest_id((uint32_t)quest.quest_id);
-
-                            auto new_quest = quest_builder.Finish();
+                            auto new_quest = create_quest_from_values(
+                              builder, wstr_to_str(it->second.description.c_str()),
+                              wstr_to_str(it->second.location.c_str()), wstr_to_str(it->second.name.c_str()),
+                              wstr_to_str(it->second.npc_name.c_str()),
+                              wstr_to_str(it->second.objectives.c_str()), quest.log_state, quest.map_from,
+                              (uint32_t)quest.map_to, marker, (uint32_t)quest.quest_id);
 
                             quests_vector.emplace_back(new_quest);
                         }
                     }
                     else
                     {
-                        if (quest.description && quest.location && quest.name && quest.npc &&
-                            quest.objectives)
+                        if (quest.location && quest.name && quest.npc)
                         {
-                            auto insert_it = quest_strs_.emplace((uint32_t)quest.quest_id, QuestStrings());
-                            GW::UI::AsyncDecodeStr(quest.description, &(*insert_it.first).second.description);
+                            auto insert_it = quest_strs_.emplace(key, QuestStrings());
+                            if (quest.description)
+                            {
+                                GW::UI::AsyncDecodeStr(quest.description,
+                                                       &(*insert_it.first).second.description);
+                            }
                             GW::UI::AsyncDecodeStr(quest.location, &(*insert_it.first).second.location);
                             GW::UI::AsyncDecodeStr(quest.name, &(*insert_it.first).second.name);
                             GW::UI::AsyncDecodeStr(quest.npc, &(*insert_it.first).second.npc_name);
-                            GW::UI::AsyncDecodeStr(quest.objectives, &(*insert_it.first).second.objectives);
+                            if (quest.objectives)
+                            {
+                                GW::UI::AsyncDecodeStr(quest.objectives,
+                                                       &(*insert_it.first).second.objectives);
+                            }
+
+                            current_quest_strs_decoding.emplace(key);
+                        }
+                        else
+                        {
+                            ChatWriter::WriteIngameDebugChat("Init: Could not decode a quest.",
+                                                             ChatColor::DarkRed);
                         }
                     }
                 }
@@ -717,5 +780,32 @@ private:
         bag_item_builder.add_index(index);
 
         return bag_item_builder.Finish();
+    }
+
+    flatbuffers::Offset<GWIPC::Quest>
+    create_quest_from_values(flatbuffers::FlatBufferBuilder& builder, const std::string& description,
+                             const std::string& location, const std::string& name,
+                             const std::string& npc_name, const std::string& objectives, int32_t log_state,
+                             int32_t map_from, int32_t map_to, GWIPC::Vec3 marker, int32_t quest_id)
+    {
+        auto description_offset = builder.CreateString(description);
+        auto location_offset = builder.CreateString(location);
+        auto name_offset = builder.CreateString(name);
+        auto npc_name_offset = builder.CreateString(npc_name);
+        auto objectives_offset = builder.CreateString(objectives);
+
+        GWIPC::QuestBuilder quest_builder(builder);
+        quest_builder.add_description(description_offset);
+        quest_builder.add_location(location_offset);
+        quest_builder.add_log_state(log_state);
+        quest_builder.add_map_from(map_from);
+        quest_builder.add_map_to(map_to);
+        quest_builder.add_marker(&marker);
+        quest_builder.add_name(name_offset);
+        quest_builder.add_npc_name(npc_name_offset);
+        quest_builder.add_objectives(objectives_offset);
+        quest_builder.add_quest_id(quest_id);
+
+        return quest_builder.Finish();
     }
 };
