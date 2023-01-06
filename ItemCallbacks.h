@@ -114,7 +114,7 @@ public:
         return success;
     }
 
-    bool inventory_or_equipment_changed = false;
+    std::atomic<bool> inventory_or_equipment_changed = false;
 
 private:
     GW::HookEntry Items_HookEntry;
