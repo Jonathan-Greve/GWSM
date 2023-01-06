@@ -12,8 +12,10 @@ public:
     {
     }
 
-    void update(UpdateStatus update_status)
+    void update(UpdateStatus update_status, bool inventory_or_equipment_changed)
     {
+        const auto bag_items_decoding_size = current_bag_item_strs_decoding.size();
+
         // Create a flatbuffer builder object
         builder_.Clear();
 
@@ -40,7 +42,8 @@ public:
         auto current_time = std::chrono::system_clock::now();
         auto elapsed_time =
           std::chrono::duration_cast<std::chrono::seconds>(current_time - last_build_bags_time_).count();
-        if (buffer_.empty() || elapsed_time > 2)
+        if (buffer_.empty() || inventory_or_equipment_changed || bag_items_decoding_size > 0 ||
+            elapsed_time >= 60)
         {
             build_bags(builder_, bags);
             last_build_bags_time_ = std::chrono::system_clock::now();
@@ -68,7 +71,6 @@ public:
                                     auto item = items->Get(j);
                                     if (item)
                                     {
-
                                         auto new_bag_item = create_bag_item_from_values(
                                           builder_, item->description()->str(), item->full_name()->str(),
                                           item->single_item_name()->str(), item->name()->str(),
@@ -95,7 +97,43 @@ public:
         }
 
         flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<GWIPC::BagItem>>> equipped_items;
-        build_equipped_items(builder_, equipped_items);
+        elapsed_time =
+          std::chrono::duration_cast<std::chrono::seconds>(current_time - last_build_equipped_items_time_)
+            .count();
+        if (buffer_.empty() || inventory_or_equipment_changed || bag_items_decoding_size > 0 ||
+            elapsed_time >= 60)
+        {
+            build_equipped_items(builder_, equipped_items);
+            last_build_equipped_items_time_ = std::chrono::system_clock::now();
+        }
+        else
+        {
+            const auto client_data = GWIPC::GetClientData(buffer_.data());
+            if (client_data)
+            {
+                const auto items_equipped = client_data->items_equiped();
+                if (items_equipped)
+                {
+                    std::vector<flatbuffers::Offset<GWIPC::BagItem>> bag_items_vector;
+                    for (uint32_t j = 0; j < items_equipped->size(); j++)
+                    {
+                        auto item = items_equipped->Get(j);
+                        if (item)
+                        {
+
+                            auto new_bag_item = create_bag_item_from_values(
+                              builder_, item->description()->str(), item->full_name()->str(),
+                              item->single_item_name()->str(), item->name()->str(), item->interaction(),
+                              item->is_weapon_set_item(), item->item_id(), item->item_modifier(),
+                              item->model_id(), item->quantity(), item->type(), item->value(), item->index());
+
+                            bag_items_vector.emplace_back(new_bag_item);
+                        }
+                    }
+                    equipped_items = builder_.CreateVector(bag_items_vector);
+                }
+            }
+        }
 
         // Create the ClientData object
         auto client_data = GWIPC::CreateClientData(builder_, character, instance, party,
@@ -119,6 +157,7 @@ private:
 
     std::vector<uint8_t> buffer_;
     std::chrono::time_point<std::chrono::system_clock> last_build_bags_time_;
+    std::chrono::time_point<std::chrono::system_clock> last_build_equipped_items_time_;
 
     struct QuestStrings
     {
@@ -143,6 +182,7 @@ private:
     std::unordered_map<uint32_t, QuestStrings> quest_strs_;
     // (model_id, mod) => BagItemStrings;
     std::map<std::pair<uint32_t, uint32_t>, BagItemStrings> bag_item_strs_;
+    std::set<std::pair<uint32_t, uint32_t>> current_bag_item_strs_decoding;
 
     void build_character(flatbuffers::FlatBufferBuilder& builder,
                          flatbuffers::Offset<GWIPC::Character>& character)
@@ -542,7 +582,7 @@ private:
     {
         uint32_t bag_size = 0;
         const auto bag = bag_array[bag_index];
-        if (bag && bag->IsInventoryBag())
+        if (bag)
         {
             const auto& items = bag->items;
             if (items.valid())
@@ -562,9 +602,12 @@ private:
                         const auto it = bag_item_strs_.find(key);
                         if (it != bag_item_strs_.end())
                         {
-                            if (it->second.description != L"" && it->second.full_name != L"" &&
-                                it->second.name != L"" && it->second.single_item_name != L"")
+                            if ((! item->info_string || it->second.description != L"") &&
+                                it->second.full_name != L"" && it->second.name != L"" &&
+                                it->second.single_item_name != L"")
                             {
+                                current_bag_item_strs_decoding.erase(key);
+
                                 auto new_bag_item = create_bag_item_from_values(
                                   builder, wstr_to_str(it->second.description.c_str()),
                                   wstr_to_str(it->second.full_name.c_str()),
@@ -579,13 +622,27 @@ private:
                         }
                         else
                         {
-                            auto insert_it = bag_item_strs_.emplace(key, BagItemStrings());
-                            GW::UI::AsyncDecodeStr(item->info_string, &(*insert_it.first).second.description);
-                            GW::UI::AsyncDecodeStr(item->complete_name_enc,
-                                                   &(*insert_it.first).second.full_name);
-                            GW::UI::AsyncDecodeStr(item->name_enc, &(*insert_it.first).second.name);
-                            GW::UI::AsyncDecodeStr(item->single_item_name,
-                                                   &(*insert_it.first).second.single_item_name);
+                            if (item->name_enc && item->complete_name_enc && item->single_item_name)
+                            {
+                                auto insert_it = bag_item_strs_.emplace(key, BagItemStrings());
+                                if (item->info_string)
+                                    GW::UI::AsyncDecodeStr(item->info_string,
+                                                           &(*insert_it.first).second.description);
+                                GW::UI::AsyncDecodeStr(item->complete_name_enc,
+                                                       &(*insert_it.first).second.full_name);
+                                GW::UI::AsyncDecodeStr(item->name_enc, &(*insert_it.first).second.name);
+                                GW::UI::AsyncDecodeStr(item->single_item_name,
+                                                       &(*insert_it.first).second.single_item_name);
+                                current_bag_item_strs_decoding.emplace(key);
+                            }
+                            else
+                            {
+                                ChatWriter::WriteIngameDebugChat(
+                                  std::format("create_bag_item: Could not decode strings for item in bag: "
+                                              "{}, index: {}.",
+                                              bag_index, item_index),
+                                  ChatColor::Blue);
+                            }
                         }
                     }
                 }

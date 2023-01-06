@@ -44,6 +44,7 @@ public:
     bool has_freed_resources = false;
 
     ClientDataUpdater client_data_updater_;
+    ItemCallbacks item_callsbacks_;
 
 private:
     GWSM()

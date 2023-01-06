@@ -170,6 +170,7 @@
     <ClInclude Include="ClientDataUpdater.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="GWSM.h" />
+    <ClInclude Include="ItemCallbacks.h" />
     <ClInclude Include="KeyboardProc.h" />
     <ClInclude Include="NewWndProc.h" />
     <ClInclude Include="pch.h" />
@@ -186,6 +187,7 @@
     <ClCompile Include="ClientDataUpdater.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="GWSM.cpp" />
+    <ClCompile Include="ItemCallbacks.cpp" />
     <ClCompile Include="NewWndProc.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>

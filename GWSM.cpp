@@ -26,6 +26,12 @@ void GWSM::Init()
         Terminate();
     }
 
+    if (! item_callsbacks_.init())
+    {
+        ChatWriter::WriteIngameDebugChat("Init: Failed initializing ItemCallbacks.", ChatColor::DarkRed);
+        Terminate();
+    }
+
     connection_manager_.connect();
 
     ChatWriter::WriteIngameDebugChat("Init: Finished.", ChatColor::Green);
@@ -110,6 +116,10 @@ void GWSM::Update(GW::HookStatus*)
             update_status.game_state = GWIPC::GameState::GameState_Unknown;
         }
 
-        gwsm_instance.client_data_updater_.update(update_status);
+        gwsm_instance.client_data_updater_.update(
+          update_status, gwsm_instance.item_callsbacks_.inventory_or_equipment_changed);
+
+        // Set to false so that client_data_updater won't keep updating the same non-changed data.
+        gwsm_instance.item_callsbacks_.inventory_or_equipment_changed = false;
     }
 }

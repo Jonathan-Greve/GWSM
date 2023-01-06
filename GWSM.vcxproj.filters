@@ -31,6 +31,9 @@
       <Filter>Utils</Filter>
     </ClCompile>
     <ClCompile Include="bag_and_item_utils.cpp" />
+    <ClCompile Include="ItemCallbacks.cpp">
+      <Filter>Packet callbacks</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="framework.h" />
@@ -65,6 +68,9 @@
       <Filter>Utils</Filter>
     </ClInclude>
     <ClInclude Include="bag_and_item_utils.h" />
+    <ClInclude Include="ItemCallbacks.h">
+      <Filter>Packet callbacks</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="thread start files">
@@ -78,6 +84,9 @@
     </Filter>
     <Filter Include="Utils">
       <UniqueIdentifier>{d8c3050d-b623-4385-a25a-44f4bc6c0615}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Packet callbacks">
+      <UniqueIdentifier>{b02d0073-7ea4-4fb4-8486-980d1e6e51da}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

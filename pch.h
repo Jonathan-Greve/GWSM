@@ -68,5 +68,6 @@
 #include "bag_and_item_utils.h"
 // My header that depend on GWCA
 #include "ChatWriter.h"
+#include "ItemCallbacks.h"
 
 #endif //PCH_H
