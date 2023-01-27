@@ -76,13 +76,13 @@ public:
                                 }
 
                                 std::string description = "";
-                                if (true || ! update_options->only_send_active_quest_description() ||
+                                if (! update_options->only_send_active_quest_description() ||
                                     cached_quest->quest_id() == active_quest_id)
                                 {
                                     description = cached_quest->description()->str();
                                 }
                                 std::string objectives = "";
-                                if (true || ! update_options->only_send_active_quest_objectives() ||
+                                if (! update_options->only_send_active_quest_objectives() ||
                                     cached_quest->quest_id() == active_quest_id)
                                 {
                                     objectives = cached_quest->objectives()->str();
