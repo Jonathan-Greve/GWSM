@@ -114,6 +114,29 @@ public:
         return success;
     }
 
+    void terminate()
+    {
+        GW::StoC::RemoveCallback(GAME_SMSG_TRADE_ADD_ITEM, &Items_HookEntry);
+        GW::StoC::RemoveCallback<GW::Packet::StoC::WindowItems>(&Items_HookEntry);
+        GW::StoC::RemoveCallback<GW::Packet::StoC::WindowItemsEnd>(&Items_HookEntry);
+        GW::StoC::RemoveCallback<GW::Packet::StoC::ItemStreamEnd>(&Items_HookEntry);
+        GW::StoC::RemoveCallback<GW::Packet::StoC::QuotedItemPrice>(&Items_HookEntry);
+        GW::StoC::RemoveCallback<GW::Packet::StoC::WindowPrices>(&Items_HookEntry);
+        GW::StoC::RemoveCallback<GW::Packet::StoC::ItemUpdateOwner>(&Items_HookEntry);
+        GW::StoC::RemoveCallback(GAME_SMSG_ITEM_UPDATE_QUANTITY, &Items_HookEntry);
+        GW::StoC::RemoveCallback<GW::Packet::StoC::ItemCustomisedForPlayer>(&Items_HookEntry);
+        GW::StoC::RemoveCallback(GAME_SMSG_ITEM_MOVED_TO_LOCATION, &Items_HookEntry);
+        GW::StoC::RemoveCallback(GAME_SMSG_INVENTORY_CREATE_BAG, &Items_HookEntry);
+        GW::StoC::RemoveCallback(GAME_SMSG_ITEM_WEAPON_SET, &Items_HookEntry);
+        GW::StoC::RemoveCallback(GAME_SMSG_ITEM_SET_ACTIVE_WEAPON_SET, &Items_HookEntry);
+        GW::StoC::RemoveCallback(GAME_SMSG_ITEM_CHANGE_LOCATION, &Items_HookEntry);
+        GW::StoC::RemoveCallback<GW::Packet::StoC::SalvageConsumeItem>(&Items_HookEntry);
+        GW::StoC::RemoveCallback<GW::Packet::StoC::ItemGeneral>(&Items_HookEntry);
+        GW::StoC::RemoveCallback<GW::Packet::StoC::ItemGeneral_ReuseID>(&Items_HookEntry);
+        GW::StoC::RemoveCallback<GW::Packet::StoC::SalvageSessionDone>(&Items_HookEntry);
+        GW::StoC::RemoveCallback<GW::Packet::StoC::TransactionDone>(&Items_HookEntry);
+    }
+
     std::atomic<bool> inventory_or_equipment_changed = false;
 
 private:

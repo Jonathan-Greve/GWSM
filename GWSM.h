@@ -50,8 +50,15 @@ public:
 
 private:
     GWSM()
-        : connection_manager_(wstr_to_str(GW::GetCharContext()->player_email))
-        , client_data_updater_(wstr_to_str(GW::GetCharContext()->player_email)){};
+        : player_email_(wstr_to_str(GW::GetCharContext()->player_email))
+        , connection_manager_(player_email_)
+        , client_data_updater_(player_email_)
+        , update_options_manager_(player_email_){};
+
+    std::string player_email_;
 
     GWIPC::ConnectionManager connection_manager_;
+    GWIPC::UpdateOptionsManager update_options_manager_;
+
+    GW::HookEntry QuestTest_HookEntry;
 };

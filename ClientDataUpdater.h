@@ -12,7 +12,8 @@ public:
     {
     }
 
-    void update(UpdateStatus update_status, bool inventory_or_equipment_changed, bool quests_changed)
+    void update(const UpdateStatus update_status, const GWIPC::UpdateOptions* update_options,
+                const bool inventory_or_equipment_changed, const bool quests_changed)
     {
         const auto quests_decoding_size = current_quest_strs_decoding.size();
         const auto bag_items_decoding_size = current_bag_item_strs_decoding.size();
@@ -32,52 +33,72 @@ public:
         flatbuffers::Offset<GWIPC::Party> party;
         build_party(builder_, party);
 
-        flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<GWIPC::Quest>>> quests;
         auto current_time = std::chrono::system_clock::now();
         auto elapsed_time =
           std::chrono::duration_cast<std::chrono::seconds>(current_time - last_build_quests_time_).count();
-        if (buffer_.empty() || quests_changed || quests_decoding_size > 0 || elapsed_time >= 60)
-        {
-            if (quests_changed)
-            {
-                quest_strs_.clear();
-            }
 
-            build_quests(builder_, quests);
-            last_build_quests_time_ = std::chrono::system_clock::now();
-        }
-        else
+        flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<GWIPC::Quest>>> quests;
+        if (update_status.game_state == GWIPC::GameState::GameState_InGame)
         {
-            const auto client_data = GWIPC::GetClientData(buffer_.data());
-            if (client_data)
+            if (buffer_.empty() || quests_changed || quests_decoding_size > 0 || elapsed_time >= 60)
             {
-                auto cached_quests = client_data->quests();
-                if (cached_quests)
+                if (quests_changed)
                 {
-                    std::vector<flatbuffers::Offset<GWIPC::Quest>> quests_vector;
-                    for (uint32_t i = 0; i < cached_quests->size(); i++)
+                    quest_strs_.clear();
+                    already_called_changequest_ids.clear();
+                }
+
+                build_quests(builder_, quests);
+                last_build_quests_time_ = std::chrono::system_clock::now();
+            }
+            else
+            {
+                auto active_quest_id = static_cast<uint32_t>(GW::PlayerMgr::GetActiveQuestId());
+
+                const auto client_data = GWIPC::GetClientData(buffer_.data());
+                if (client_data)
+                {
+                    auto cached_quests = client_data->quests();
+                    if (cached_quests)
                     {
-                        auto cached_quest = cached_quests->Get(i);
-                        if (cached_quest)
+                        std::vector<flatbuffers::Offset<GWIPC::Quest>> quests_vector;
+                        for (uint32_t i = 0; i < cached_quests->size(); i++)
                         {
-                            GWIPC::Vec3 marker;
-                            if (cached_quest->marker())
+                            auto cached_quest = cached_quests->Get(i);
+                            if (cached_quest)
                             {
-                                marker = GWIPC::Vec3(cached_quest->marker()->x(), cached_quest->marker()->y(),
-                                                     cached_quest->marker()->z());
+                                GWIPC::Vec3 marker;
+                                if (cached_quest->marker())
+                                {
+                                    marker =
+                                      GWIPC::Vec3(cached_quest->marker()->x(), cached_quest->marker()->y(),
+                                                  cached_quest->marker()->z());
+                                }
+
+                                std::string description = "";
+                                if (true || ! update_options->only_send_active_quest_description() ||
+                                    cached_quest->quest_id() == active_quest_id)
+                                {
+                                    description = cached_quest->description()->str();
+                                }
+                                std::string objectives = "";
+                                if (true || ! update_options->only_send_active_quest_objectives() ||
+                                    cached_quest->quest_id() == active_quest_id)
+                                {
+                                    objectives = cached_quest->objectives()->str();
+                                }
+
+                                auto new_quest = create_quest_from_values(
+                                  builder_, description, cached_quest->location()->str(),
+                                  cached_quest->name()->str(), cached_quest->npc_name()->str(), objectives,
+                                  cached_quest->log_state(), cached_quest->map_from(), cached_quest->map_to(),
+                                  marker, cached_quest->quest_id());
+
+                                quests_vector.emplace_back(new_quest);
                             }
-
-                            auto new_quest = create_quest_from_values(
-                              builder_, cached_quest->description()->str(), cached_quest->location()->str(),
-                              cached_quest->name()->str(), cached_quest->npc_name()->str(),
-                              cached_quest->objectives()->str(), cached_quest->log_state(),
-                              cached_quest->map_from(), cached_quest->map_to(), marker,
-                              cached_quest->quest_id());
-
-                            quests_vector.emplace_back(new_quest);
                         }
+                        quests = builder_.CreateVector(quests_vector);
                     }
-                    quests = builder_.CreateVector(quests_vector);
                 }
             }
         }
@@ -242,6 +263,8 @@ private:
     // (model_id, mod) => BagItemStrings;
     std::map<std::pair<uint32_t, uint32_t>, BagItemStrings> bag_item_strs_;
     std::set<std::pair<uint32_t, uint32_t>> current_bag_item_strs_decoding;
+
+    std::set<uint32_t> already_called_changequest_ids;
 
     void build_character(flatbuffers::FlatBufferBuilder& builder,
                          flatbuffers::Offset<GWIPC::Character>& character)
@@ -590,7 +613,7 @@ private:
                     if (it != quest_strs_.end())
                     {
                         if (it->second.location != L"" && it->second.name != L"" &&
-                            it->second.npc_name != L"")
+                            it->second.description != L"" && it->second.npc_name != L"")
                         {
                             current_quest_strs_decoding.erase(key);
 
@@ -608,7 +631,9 @@ private:
                     }
                     else
                     {
-                        if (quest.location && quest.name && quest.npc)
+
+                        if (quest.location && quest.name && quest.npc && quest.description &&
+                            quest.objectives)
                         {
                             auto insert_it = quest_strs_.emplace(key, QuestStrings());
                             if (quest.description)
@@ -619,7 +644,7 @@ private:
                             GW::UI::AsyncDecodeStr(quest.location, &(*insert_it.first).second.location);
                             GW::UI::AsyncDecodeStr(quest.name, &(*insert_it.first).second.name);
                             GW::UI::AsyncDecodeStr(quest.npc, &(*insert_it.first).second.npc_name);
-                            if (quest.objectives)
+                            if (quest.objectives && *quest.objectives != 0)
                             {
                                 GW::UI::AsyncDecodeStr(quest.objectives,
                                                        &(*insert_it.first).second.objectives);
@@ -629,8 +654,20 @@ private:
                         }
                         else
                         {
-                            ChatWriter::WriteIngameDebugChat("Init: Could not decode a quest.",
-                                                             ChatColor::DarkRed);
+                            if (! already_called_changequest_ids.contains(key))
+                            {
+                                auto active_quest_id = (uint32_t)GW::PlayerMgr::GetActiveQuestId();
+                                if (active_quest_id != key)
+                                {
+                                    GW::UI::ChangeQuest(key);
+                                    already_called_changequest_ids.insert(key);
+                                }
+
+                                ChatWriter::WriteIngameDebugChat(
+                                  std::format("Init: Could not decode a quest: {}",
+                                              static_cast<uint32_t>(quest.quest_id)),
+                                  ChatColor::DarkRed);
+                            }
                         }
                     }
                 }

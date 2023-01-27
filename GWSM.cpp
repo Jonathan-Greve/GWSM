@@ -3,6 +3,16 @@
 
 #include "KeyboardProc.h"
 #include "SafeWndProc.h"
+// 0x14d == quest_removed wparam = {quest_id, ... } .
+void quest_test_callback(GW::HookStatus* status, GW::UI::UIMessage message_id, void* wparam, void* unknown)
+{
+    if (wparam && message_id == GW::UI::UIMessage::kCurrentQuestChanged)
+    {
+        uint32_t quest_id = *((uint32_t*)wparam);
+        ChatWriter::WriteIngameDebugChat(
+          std::format("Quest UI message: {}. QId: {}", (uint32_t)message_id, quest_id), ChatColor::Orange);
+    }
+}
 
 void GWSM::Init()
 {
@@ -38,6 +48,14 @@ void GWSM::Init()
         Terminate();
     }
 
+    for (int i = 0x1; i < 0x270; i++)
+    {
+        if (i == 0x7e)
+            continue;
+        GW::UI::RegisterUIMessageCallback(&QuestTest_HookEntry, (GW::UI::UIMessage)(0x10000000 | i),
+                                          quest_test_callback);
+    }
+
     connection_manager_.connect();
 
     ChatWriter::WriteIngameDebugChat("Init: Finished.", ChatColor::Green);
@@ -51,7 +69,13 @@ void GWSM::Terminate()
     {
         connection_manager_.disconnect();
         connection_manager_.terminate();
+
         GW::GameThread::RemoveGameThreadCallback(&Update_Entry);
+
+        // Remove callbacks
+        GW::UI::RemoveUIMessageCallback(&QuestTest_HookEntry);
+        item_callsbacks_.terminate();
+        quest_callsbacks_.terminate();
 
         UnhookWindowsHookEx(keyboard_hook_handle);
 
@@ -93,6 +117,9 @@ void GWSM::Update(GW::HookStatus*)
         const auto pregame_context = GW::GetPreGameContext();
         const auto cam = GW::CameraMgr::GetCamera();
         auto& gwsm_instance = GWSM::Instance();
+
+        const auto update_options = gwsm_instance.update_options_manager_.get_update_options();
+
         UpdateStatus update_status;
         if (pregame_context != nullptr)
         {
@@ -107,13 +134,9 @@ void GWSM::Update(GW::HookStatus*)
         else if (cam && ! std::isinf(cam->position.x))
         {
             // Always keep quest log open
-            GW::GameThread::Enqueue(
-              [&]()
-              {
-                  auto window_pos = GetWindowPosition(GW::UI::WindowID::WindowID_QuestLog);
-                  if (! window_pos->visible())
-                      GW::UI::Keypress(GW::UI::ControlAction_OpenQuestLog);
-              });
+            auto window_pos = GetWindowPosition(GW::UI::WindowID::WindowID_QuestLog);
+            if (! window_pos->visible())
+                GW::UI::Keypress(GW::UI::ControlAction_OpenQuestLog);
 
             update_status.game_state = GWIPC::GameState::GameState_InGame;
         }
@@ -122,12 +145,11 @@ void GWSM::Update(GW::HookStatus*)
             update_status.game_state = GWIPC::GameState::GameState_Unknown;
         }
 
-        gwsm_instance.client_data_updater_.update(
-          update_status, gwsm_instance.item_callsbacks_.inventory_or_equipment_changed,
-          gwsm_instance.quest_callsbacks_.quests_changed);
+        const auto inventory_or_equipment_changed =
+          gwsm_instance.item_callsbacks_.inventory_or_equipment_changed.exchange(false);
+        const auto quests_changed = gwsm_instance.quest_callsbacks_.quests_changed.exchange(false);
 
-        // Set to false so that client_data_updater won't keep updating the same non-changed data.
-        gwsm_instance.item_callsbacks_.inventory_or_equipment_changed = false;
-        gwsm_instance.quest_callsbacks_.quests_changed = false;
+        gwsm_instance.client_data_updater_.update(update_status, update_options,
+                                                  inventory_or_equipment_changed, quests_changed);
     }
 }

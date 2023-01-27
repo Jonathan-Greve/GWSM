@@ -11,7 +11,7 @@
 DWORD __stdcall ThreadEntry(LPVOID)
 {
     GW::HookBase::Initialize();
-    if (! GW::Initialize())
+    if (! GW::Initialize() || ! GW::InitUIExtensions())
     {
         if (MessageBoxA(nullptr, "Initialize Failed at finding all addresses, contact Developers about this.",
                         "GWToolbox++ API Error", 0) == IDOK)
@@ -19,6 +19,8 @@ DWORD __stdcall ThreadEntry(LPVOID)
         }
         goto leave;
     }
+
+    // Initialize GWCA extensions
 
     GW::HookBase::EnableHooks();
     GW::GameThread::Enqueue([]() { GWSM::Instance().Init(); });
@@ -40,7 +42,7 @@ DWORD __stdcall ThreadEntry(LPVOID)
     Sleep(16);
 leave:
     GW::Terminate();
-        
+
     // Seems to fix crash when sleeping here.
     Sleep(16);
     FreeLibraryAndExitThread(dll_module, EXIT_SUCCESS);

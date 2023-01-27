@@ -64,11 +64,18 @@
 #include "Managers/EffectMgr.h"
 #include "Managers/SkillbarMgr.h"
 #include "Managers/ItemMgr.h"
+#include "Managers/PlayerMgr.h"
+#include "Managers/CtoSMgr.h"
+
+#include "Utilities/Hook.h"
+#include "Utilities/Hooker.h"
+#include "Utilities/Scanner.h"
 
 #include "bag_and_item_utils.h"
 // My header that depend on GWCA
 #include "ChatWriter.h"
 #include "ItemCallbacks.h"
 #include "QuestCallbacks.h"
+#include "GWCA_UIMgr_Extensions.h"
 
 #endif //PCH_H

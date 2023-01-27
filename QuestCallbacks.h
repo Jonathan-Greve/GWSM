@@ -38,6 +38,17 @@ public:
         return success;
     }
 
+    void terminate()
+    {
+        GW::StoC::RemoveCallback(GAME_SMSG_QUEST_GENERAL_INFO, &Quests_HookEntry);
+        GW::StoC::RemoveCallback(GAME_SMSG_QUEST_DESCRIPTION, &Quests_HookEntry);
+        GW::StoC::RemoveCallback(GAME_SMSG_QUEST_ADD, &Quests_HookEntry);
+        GW::StoC::RemoveCallback(GAME_SMSG_QUEST_UPDATE_MARKER, &Quests_HookEntry);
+        GW::StoC::RemoveCallback(GAME_SMSG_QUEST_REMOVE, &Quests_HookEntry);
+        GW::StoC::RemoveCallback(GAME_SMSG_QUEST_ADD_MARKER, &Quests_HookEntry);
+        GW::StoC::RemoveCallback(GAME_SMSG_QUEST_UPDATE_NAME, &Quests_HookEntry);
+    }
+
     std::atomic<bool> quests_changed = false;
 
 private:

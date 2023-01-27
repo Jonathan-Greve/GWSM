@@ -37,6 +37,9 @@
     <ClCompile Include="QuestCallbacks.cpp">
       <Filter>Packet callbacks</Filter>
     </ClCompile>
+    <ClCompile Include="GWCA_UIMgr_Extensions.cpp">
+      <Filter>GW interaction\GWCA extensions</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="framework.h" />
@@ -77,6 +80,9 @@
     <ClInclude Include="QuestCallbacks.h">
       <Filter>Packet callbacks</Filter>
     </ClInclude>
+    <ClInclude Include="GWCA_UIMgr_Extensions.h">
+      <Filter>GW interaction\GWCA extensions</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="thread start files">
@@ -93,6 +99,9 @@
     </Filter>
     <Filter Include="Packet callbacks">
       <UniqueIdentifier>{b02d0073-7ea4-4fb4-8486-980d1e6e51da}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GW interaction\GWCA extensions">
+      <UniqueIdentifier>{12ef5294-ecf2-446f-bafc-9ed79efc3608}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>
