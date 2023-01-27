@@ -33,6 +33,10 @@ public:
         flatbuffers::Offset<GWIPC::Party> party;
         build_party(builder_, party);
 
+        // Create the NavMesh object
+        flatbuffers::Offset<GWIPC::NavMesh> nav_mesh;
+        build_nav_mesh(builder_, nav_mesh);
+
         auto current_time = std::chrono::system_clock::now();
         auto elapsed_time =
           std::chrono::duration_cast<std::chrono::seconds>(current_time - last_build_quests_time_).count();
@@ -420,6 +424,112 @@ private:
                 }
             }
         }
+    }
+
+    void build_nav_mesh(flatbuffers::FlatBufferBuilder& builder,
+                        flatbuffers::Offset<GWIPC::NavMesh>& nav_mesh)
+    {
+        const GW::GameContext* const game_context = GW::GetGameContext();
+        if (! game_context)
+            return;
+
+        const GW::MapContext* const map_context = game_context->map;
+        if (! map_context)
+            return;
+
+        const GW::Array<uint32_t>& sub1s = map_context->sub1->pathing_map_block;
+        const auto path_map = GW::Map::GetPathingMap();
+
+        auto min_x = std::numeric_limits<float>::max();
+        auto max_x = std::numeric_limits<float>::min();
+        auto min_y = std::numeric_limits<float>::max();
+        auto max_y = std::numeric_limits<float>::min();
+        auto min_z = std::numeric_limits<float>::max();
+        auto max_z = std::numeric_limits<float>::min();
+        std::vector<flatbuffers::Offset<GWIPC::NavMeshTrapezoid>> nav_mesh_trapezoid_vector;
+
+        for (size_t i = 0; i < path_map->size(); ++i)
+        {
+            const GW::PathingMap pmap = path_map->m_buffer[i];
+            for (size_t j = 0; j < pmap.trapezoid_count; ++j)
+            {
+                GW::PathingTrapezoid& trapezoid = pmap.trapezoids[j];
+                bool is_traversable = ! sub1s[i];
+
+                float radius = 10;
+
+                // Get height of vertices and convert to a LH coordinate system.
+                float altitude = 0;
+                GW::GamePos gp{trapezoid.XBL, trapezoid.YB, i};
+                GW::Map::QueryAltitude(gp, radius, altitude);
+                GWIPC::Vec3 BL{trapezoid.XBL, -altitude, trapezoid.YB};
+
+                GW::GamePos gp2{trapezoid.XBR, trapezoid.YB, i};
+                GW::Map::QueryAltitude(gp2, radius, altitude);
+                GWIPC::Vec3 BR{trapezoid.XBR, -altitude, trapezoid.YB};
+
+                GW::GamePos gp3{trapezoid.XTL, trapezoid.YT, i};
+                GW::Map::QueryAltitude(gp3, radius, altitude);
+                GWIPC::Vec3 TL{trapezoid.XTL, -altitude, trapezoid.YT};
+
+                GW::GamePos gp4{trapezoid.XTR, trapezoid.YT, i};
+                GW::Map::QueryAltitude(gp4, radius, altitude);
+                GWIPC::Vec3 TR{trapezoid.XTR, -altitude, trapezoid.YT};
+
+                std::vector<GWIPC::Vec3> trapezoidVertices = {BL, BR, TL, TR};
+                min_x = min_element(trapezoidVertices.begin(), trapezoidVertices.end(),
+                                    [](const GWIPC::Vec3& a, const GWIPC::Vec3& b) { return a.x() < b.x(); })
+                          ->x();
+                max_x = max_element(trapezoidVertices.begin(), trapezoidVertices.end(),
+                                    [](const GWIPC::Vec3& a, const GWIPC::Vec3& b) { return a.x() < b.x(); })
+                          ->x();
+                min_y = min_element(trapezoidVertices.begin(), trapezoidVertices.end(),
+                                    [](const GWIPC::Vec3& a, const GWIPC::Vec3& b) { return a.y() < b.y(); })
+                          ->y();
+                max_y = max_element(trapezoidVertices.begin(), trapezoidVertices.end(),
+                                    [](const GWIPC::Vec3& a, const GWIPC::Vec3& b) { return a.y() < b.y(); })
+                          ->y();
+                min_z = min_element(trapezoidVertices.begin(), trapezoidVertices.end(),
+                                    [](const GWIPC::Vec3& a, const GWIPC::Vec3& b) { return a.z() < b.z(); })
+                          ->z();
+                max_z = max_element(trapezoidVertices.begin(), trapezoidVertices.end(),
+                                    [](const GWIPC::Vec3& a, const GWIPC::Vec3& b) { return a.z() < b.z(); })
+                          ->z();
+
+                int left_id = -1;
+                int right_id = -1;
+                int down_id = -1;
+                int up_id = -1;
+                if (trapezoid.adjacent[0])
+                    left_id = trapezoid.adjacent[0]->id;
+                if (trapezoid.adjacent[1])
+                    right_id = trapezoid.adjacent[1]->id;
+                if (trapezoid.adjacent[2])
+                    down_id = trapezoid.adjacent[2]->id;
+                if (trapezoid.adjacent[3])
+                    up_id = trapezoid.adjacent[3]->id;
+
+                GWIPC::AdjacentTrapezoidIds adjacent_trapezoid_ids{left_id, right_id, down_id, up_id};
+
+                auto trapezoid_builder = GWIPC::NavMeshTrapezoidBuilder(builder);
+                trapezoid_builder.add_id(trapezoid.id);
+                trapezoid_builder.add_adjacent_trapezoid_ids(&adjacent_trapezoid_ids);
+                trapezoid_builder.add_top_left(&TL);
+                trapezoid_builder.add_top_right(&TR);
+                trapezoid_builder.add_bottom_left(&BL);
+                trapezoid_builder.add_bottom_right(&BR);
+                trapezoid_builder.add_z_plane(pmap.zplane);
+
+                auto new_trapezoid = trapezoid_builder.Finish();
+                nav_mesh_trapezoid_vector.push_back(new_trapezoid);
+            }
+        }
+
+        auto trapezoids = builder.CreateVector(nav_mesh_trapezoid_vector);
+        auto nav_mesh_builder = GWIPC::NavMeshBuilder(builder);
+        nav_mesh_builder.add_trapezoids(trapezoids);
+
+        nav_mesh = nav_mesh_builder.Finish();
     }
 
     void build_party(flatbuffers::FlatBufferBuilder& builder, flatbuffers::Offset<GWIPC::Party>& party)
