@@ -7,6 +7,8 @@
 #ifndef PCH_H
 #define PCH_H
 
+#define NOMINMAX
+
 // add headers that you want to pre-compile here
 #include "framework.h"
 #include <string>
@@ -18,6 +20,7 @@
 #include <cstdlib>
 #include <mutex>
 #include <functional>
+#include <limits>
 
 // Other stuff
 
@@ -51,6 +54,7 @@
 #include "GameEntities/Quest.h"
 #include "GameEntities/Item.h"
 #include "GameEntities/Guild.h"
+#include "GameEntities/Pathing.h"
 
 #include "Managers/GameThreadMgr.h"
 #include "Managers/MemoryMgr.h"
