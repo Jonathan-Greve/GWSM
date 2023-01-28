@@ -13,7 +13,8 @@ public:
     }
 
     void update(const UpdateStatus update_status, const GWIPC::UpdateOptions* update_options,
-                const bool inventory_or_equipment_changed, const bool quests_changed)
+                const bool inventory_or_equipment_changed, const bool quests_changed,
+                std::string& nav_mesh_file_path)
     {
         const auto quests_decoding_size = current_quest_strs_decoding.size();
         const auto bag_items_decoding_size = current_bag_item_strs_decoding.size();
@@ -32,10 +33,6 @@ public:
         // Create the Party object
         flatbuffers::Offset<GWIPC::Party> party;
         build_party(builder_, party);
-
-        // Create the NavMesh object
-        flatbuffers::Offset<GWIPC::NavMesh> nav_mesh;
-        build_nav_mesh(builder_, nav_mesh);
 
         auto current_time = std::chrono::system_clock::now();
         auto elapsed_time =
@@ -212,9 +209,14 @@ public:
             }
         }
 
+        flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<GWIPC::GWDialog>>> dialogs;
+
+        auto nav_mesh_file_path_fb = builder_.CreateString(nav_mesh_file_path);
+
         // Create the ClientData object
-        auto client_data = GWIPC::CreateClientData(builder_, character, instance, party,
-                                                   update_status.game_state, quests, bags, equipped_items);
+        auto client_data =
+          GWIPC::CreateClientData(builder_, character, instance, party, update_status.game_state, quests,
+                                  bags, equipped_items, dialogs, nav_mesh_file_path_fb);
 
         // Finish creating the flatbuffer and retrieve a pointer to the buffer
         builder_.Finish(client_data);
@@ -426,115 +428,8 @@ private:
         }
     }
 
-    void build_nav_mesh(flatbuffers::FlatBufferBuilder& builder,
-                        flatbuffers::Offset<GWIPC::NavMesh>& nav_mesh)
-    {
-        const GW::GameContext* const game_context = GW::GetGameContext();
-        if (! game_context)
-            return;
-
-        const GW::MapContext* const map_context = game_context->map;
-        if (! map_context)
-            return;
-
-        const GW::Array<uint32_t>& sub1s = map_context->sub1->pathing_map_block;
-        const auto path_map = GW::Map::GetPathingMap();
-
-        auto min_x = std::numeric_limits<float>::max();
-        auto max_x = std::numeric_limits<float>::min();
-        auto min_y = std::numeric_limits<float>::max();
-        auto max_y = std::numeric_limits<float>::min();
-        auto min_z = std::numeric_limits<float>::max();
-        auto max_z = std::numeric_limits<float>::min();
-        std::vector<flatbuffers::Offset<GWIPC::NavMeshTrapezoid>> nav_mesh_trapezoid_vector;
-
-        for (size_t i = 0; i < path_map->size(); ++i)
-        {
-            const GW::PathingMap pmap = path_map->m_buffer[i];
-            for (size_t j = 0; j < pmap.trapezoid_count; ++j)
-            {
-                GW::PathingTrapezoid& trapezoid = pmap.trapezoids[j];
-                bool is_traversable = ! sub1s[i];
-
-                float radius = 10;
-
-                // Get height of vertices and convert to a LH coordinate system.
-                float altitude = 0;
-                GW::GamePos gp{trapezoid.XBL, trapezoid.YB, i};
-                GW::Map::QueryAltitude(gp, radius, altitude);
-                GWIPC::Vec3 BL{trapezoid.XBL, -altitude, trapezoid.YB};
-
-                GW::GamePos gp2{trapezoid.XBR, trapezoid.YB, i};
-                GW::Map::QueryAltitude(gp2, radius, altitude);
-                GWIPC::Vec3 BR{trapezoid.XBR, -altitude, trapezoid.YB};
-
-                GW::GamePos gp3{trapezoid.XTL, trapezoid.YT, i};
-                GW::Map::QueryAltitude(gp3, radius, altitude);
-                GWIPC::Vec3 TL{trapezoid.XTL, -altitude, trapezoid.YT};
-
-                GW::GamePos gp4{trapezoid.XTR, trapezoid.YT, i};
-                GW::Map::QueryAltitude(gp4, radius, altitude);
-                GWIPC::Vec3 TR{trapezoid.XTR, -altitude, trapezoid.YT};
-
-                std::vector<GWIPC::Vec3> trapezoidVertices = {BL, BR, TL, TR};
-                min_x = min_element(trapezoidVertices.begin(), trapezoidVertices.end(),
-                                    [](const GWIPC::Vec3& a, const GWIPC::Vec3& b) { return a.x() < b.x(); })
-                          ->x();
-                max_x = max_element(trapezoidVertices.begin(), trapezoidVertices.end(),
-                                    [](const GWIPC::Vec3& a, const GWIPC::Vec3& b) { return a.x() < b.x(); })
-                          ->x();
-                min_y = min_element(trapezoidVertices.begin(), trapezoidVertices.end(),
-                                    [](const GWIPC::Vec3& a, const GWIPC::Vec3& b) { return a.y() < b.y(); })
-                          ->y();
-                max_y = max_element(trapezoidVertices.begin(), trapezoidVertices.end(),
-                                    [](const GWIPC::Vec3& a, const GWIPC::Vec3& b) { return a.y() < b.y(); })
-                          ->y();
-                min_z = min_element(trapezoidVertices.begin(), trapezoidVertices.end(),
-                                    [](const GWIPC::Vec3& a, const GWIPC::Vec3& b) { return a.z() < b.z(); })
-                          ->z();
-                max_z = max_element(trapezoidVertices.begin(), trapezoidVertices.end(),
-                                    [](const GWIPC::Vec3& a, const GWIPC::Vec3& b) { return a.z() < b.z(); })
-                          ->z();
-
-                int left_id = -1;
-                int right_id = -1;
-                int down_id = -1;
-                int up_id = -1;
-                if (trapezoid.adjacent[0])
-                    left_id = trapezoid.adjacent[0]->id;
-                if (trapezoid.adjacent[1])
-                    right_id = trapezoid.adjacent[1]->id;
-                if (trapezoid.adjacent[2])
-                    down_id = trapezoid.adjacent[2]->id;
-                if (trapezoid.adjacent[3])
-                    up_id = trapezoid.adjacent[3]->id;
-
-                GWIPC::AdjacentTrapezoidIds adjacent_trapezoid_ids{left_id, right_id, down_id, up_id};
-
-                auto trapezoid_builder = GWIPC::NavMeshTrapezoidBuilder(builder);
-                trapezoid_builder.add_id(trapezoid.id);
-                trapezoid_builder.add_adjacent_trapezoid_ids(&adjacent_trapezoid_ids);
-                trapezoid_builder.add_top_left(&TL);
-                trapezoid_builder.add_top_right(&TR);
-                trapezoid_builder.add_bottom_left(&BL);
-                trapezoid_builder.add_bottom_right(&BR);
-                trapezoid_builder.add_z_plane(pmap.zplane);
-
-                auto new_trapezoid = trapezoid_builder.Finish();
-                nav_mesh_trapezoid_vector.push_back(new_trapezoid);
-            }
-        }
-
-        auto trapezoids = builder.CreateVector(nav_mesh_trapezoid_vector);
-        auto nav_mesh_builder = GWIPC::NavMeshBuilder(builder);
-        nav_mesh_builder.add_trapezoids(trapezoids);
-
-        nav_mesh = nav_mesh_builder.Finish();
-    }
-
     void build_party(flatbuffers::FlatBufferBuilder& builder, flatbuffers::Offset<GWIPC::Party>& party)
     {
-
         auto party_context = GW::GetPartyContext();
         if (party_context)
         {
@@ -544,7 +439,6 @@ private:
                 std::vector<flatbuffers::Offset<GWIPC::AgentLiving>> players_vector;
                 for (const auto& player : player_party->players)
                 {
-                    flatbuffers::Offset<GWIPC::AgentLiving> agent_living;
                     auto player_agent = GW::Agents::GetPlayerByID(player.login_number);
                     if (player_agent)
                     {
@@ -561,13 +455,11 @@ private:
                             players_vector.push_back(agent_living);
                         }
                     }
-                    players_vector.push_back(agent_living);
                 }
 
                 std::vector<flatbuffers::Offset<GWIPC::AgentLiving>> henchmen_vector;
                 for (const auto& henchman : player_party->henchmen)
                 {
-                    flatbuffers::Offset<GWIPC::AgentLiving> agent_living;
                     auto henchman_agent = GW::Agents::GetAgentByID(henchman.agent_id);
                     if (henchman_agent)
                     {
@@ -584,7 +476,6 @@ private:
                             henchmen_vector.push_back(agent_living);
                         }
                     }
-                    henchmen_vector.push_back(agent_living);
                 }
 
                 std::vector<flatbuffers::Offset<GWIPC::Hero>> heroes_vector;
@@ -648,9 +539,9 @@ private:
                     heroes_vector.push_back(fb_hero);
                 }
 
-                auto heroes = builder.CreateVector(heroes_vector);
                 auto players = builder.CreateVector(players_vector);
                 auto henchmen = builder.CreateVector(henchmen_vector);
+                auto heroes = builder.CreateVector(heroes_vector);
 
                 std::vector<flatbuffers::Offset<GWIPC::MissionObjective>> mission_objective_vector;
                 const auto world_context = GW::GetWorldContext();
