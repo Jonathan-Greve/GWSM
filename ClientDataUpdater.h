@@ -556,7 +556,9 @@ private:
                             agent_living_builder.add_party_slot(
                               get_party_slot_from_agent_id(player_agent->agent_id));
 
-                            agent_living = agent_living_builder.Finish();
+                            auto agent_living = agent_living_builder.Finish();
+
+                            players_vector.push_back(agent_living);
                         }
                     }
                     players_vector.push_back(agent_living);
@@ -577,7 +579,9 @@ private:
                             agent_living_builder.add_party_slot(
                               get_party_slot_from_agent_id(henchman_agent->agent_id));
 
-                            agent_living = agent_living_builder.Finish();
+                            auto agent_living = agent_living_builder.Finish();
+
+                            henchmen_vector.push_back(agent_living);
                         }
                     }
                     henchmen_vector.push_back(agent_living);
