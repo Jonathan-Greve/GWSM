@@ -43,6 +43,9 @@
     <ClCompile Include="GetPathToProgramDirectory.cpp">
       <Filter>Utils</Filter>
     </ClCompile>
+    <ClCompile Include="UpdateNavMesh.cpp">
+      <Filter>Update functions\NavMesh</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="framework.h" />
@@ -89,6 +92,9 @@
     <ClInclude Include="GetPathToProgramDirectory.h">
       <Filter>Utils</Filter>
     </ClInclude>
+    <ClInclude Include="UpdateNavMesh.h">
+      <Filter>Update functions\NavMesh</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="thread start files">
@@ -108,6 +114,9 @@
     </Filter>
     <Filter Include="GW interaction\GWCA extensions">
       <UniqueIdentifier>{12ef5294-ecf2-446f-bafc-9ed79efc3608}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Update functions\NavMesh">
+      <UniqueIdentifier>{acce6387-a3f8-4c17-b605-c6863588ecdc}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

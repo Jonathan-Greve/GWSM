@@ -181,6 +181,7 @@
     <ClInclude Include="SafeWndProc.h" />
     <ClInclude Include="string_utils.h" />
     <ClInclude Include="ThreadEntry.h" />
+    <ClInclude Include="UpdateNavMesh.h" />
     <ClInclude Include="UpdateStatus.h" />
   </ItemGroup>
   <ItemGroup>
@@ -205,6 +206,7 @@
     <ClCompile Include="SafeWndProc.cpp" />
     <ClCompile Include="string_utils.cpp" />
     <ClCompile Include="ThreadEntry.cpp" />
+    <ClCompile Include="UpdateNavMesh.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="GWCA\vc\GWCA.vcxproj">

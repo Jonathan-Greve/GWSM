@@ -120,6 +120,7 @@ void GWSM::Update(GW::HookStatus*)
 
         const auto update_options = gwsm_instance.update_options_manager_.get_update_options();
 
+        std::string nav_mesh_file_path;
         UpdateStatus update_status;
         if (pregame_context != nullptr)
         {
@@ -138,6 +139,8 @@ void GWSM::Update(GW::HookStatus*)
             if (! window_pos->visible())
                 GW::UI::Keypress(GW::UI::ControlAction_OpenQuestLog);
 
+            nav_mesh_file_path = update_nav_mesh();
+
             update_status.game_state = GWIPC::GameState::GameState_InGame;
         }
         else
@@ -149,7 +152,7 @@ void GWSM::Update(GW::HookStatus*)
           gwsm_instance.item_callsbacks_.inventory_or_equipment_changed.exchange(false);
         const auto quests_changed = gwsm_instance.quest_callsbacks_.quests_changed.exchange(false);
 
-        gwsm_instance.client_data_updater_.update(update_status, update_options,
-                                                  inventory_or_equipment_changed, quests_changed);
+        gwsm_instance.client_data_updater_.update(
+          update_status, update_options, inventory_or_equipment_changed, quests_changed, nav_mesh_file_path);
     }
 }

@@ -23,6 +23,8 @@
 #include <limits>
 #include <shlobj.h>
 #include <filesystem>
+#include <iostream>
+#include <fstream>
 
 // Other stuff
 
@@ -31,6 +33,7 @@
 #include "AgentUtils.h"
 #include "UpdateStatus.h"
 #include "GetPathToProgramDirectory.h"
+#include "UpdateNavMesh.h"
 
 // GWCA includes
 #include "Constants/Maps.h"
