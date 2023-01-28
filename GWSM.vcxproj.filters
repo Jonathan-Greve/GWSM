@@ -40,6 +40,9 @@
     <ClCompile Include="GWCA_UIMgr_Extensions.cpp">
       <Filter>GW interaction\GWCA extensions</Filter>
     </ClCompile>
+    <ClCompile Include="GetPathToProgramDirectory.cpp">
+      <Filter>Utils</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="framework.h" />
@@ -82,6 +85,9 @@
     </ClInclude>
     <ClInclude Include="GWCA_UIMgr_Extensions.h">
       <Filter>GW interaction\GWCA extensions</Filter>
+    </ClInclude>
+    <ClInclude Include="GetPathToProgramDirectory.h">
+      <Filter>Utils</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -169,6 +169,7 @@
     <ClInclude Include="ChatWriter.h" />
     <ClInclude Include="ClientDataUpdater.h" />
     <ClInclude Include="framework.h" />
+    <ClInclude Include="GetPathToProgramDirectory.h" />
     <ClInclude Include="GWCA_UIMgr_Extensions.h" />
     <ClInclude Include="GWSM.h" />
     <ClInclude Include="ItemCallbacks.h" />
@@ -188,6 +189,7 @@
     <ClCompile Include="ChatWriter.cpp" />
     <ClCompile Include="ClientDataUpdater.cpp" />
     <ClCompile Include="dllmain.cpp" />
+    <ClCompile Include="GetPathToProgramDirectory.cpp" />
     <ClCompile Include="GWCA_UIMgr_Extensions.cpp" />
     <ClCompile Include="GWSM.cpp" />
     <ClCompile Include="ItemCallbacks.cpp" />

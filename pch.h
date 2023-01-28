@@ -21,6 +21,8 @@
 #include <mutex>
 #include <functional>
 #include <limits>
+#include <shlobj.h>
+#include <filesystem>
 
 // Other stuff
 
@@ -28,6 +30,7 @@
 #include "string_utils.h"
 #include "AgentUtils.h"
 #include "UpdateStatus.h"
+#include "GetPathToProgramDirectory.h"
 
 // GWCA includes
 #include "Constants/Maps.h"
