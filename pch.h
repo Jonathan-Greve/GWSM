@@ -25,6 +25,7 @@
 #include <filesystem>
 #include <iostream>
 #include <fstream>
+#include <regex>
 
 // Other stuff
 
@@ -86,6 +87,7 @@
 #include "ChatWriter.h"
 #include "ItemCallbacks.h"
 #include "QuestCallbacks.h"
+#include "EncString.h"
 #include "GWCA_UIMgr_Extensions.h"
 
 #endif //PCH_H
