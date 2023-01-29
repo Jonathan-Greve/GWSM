@@ -216,7 +216,7 @@ public:
         // Create the ClientData object
         auto client_data =
           GWIPC::CreateClientData(builder_, character, instance, party, update_status.game_state, quests,
-                                  bags, equipped_items, dialogs, nav_mesh_file_path_fb);
+                                  bags, equipped_items, dialogs, 0, nav_mesh_file_path_fb);
 
         // Finish creating the flatbuffer and retrieve a pointer to the buffer
         builder_.Finish(client_data);
