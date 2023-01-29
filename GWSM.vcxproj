@@ -168,6 +168,8 @@
     <ClInclude Include="bag_and_item_utils.h" />
     <ClInclude Include="ChatWriter.h" />
     <ClInclude Include="ClientDataUpdater.h" />
+    <ClInclude Include="DialogsManager.h" />
+    <ClInclude Include="EncString.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="GetPathToProgramDirectory.h" />
     <ClInclude Include="GWCA_UIMgr_Extensions.h" />
@@ -189,7 +191,9 @@
     <ClCompile Include="bag_and_item_utils.cpp" />
     <ClCompile Include="ChatWriter.cpp" />
     <ClCompile Include="ClientDataUpdater.cpp" />
+    <ClCompile Include="DialogsManager.cpp" />
     <ClCompile Include="dllmain.cpp" />
+    <ClCompile Include="EncString.cpp" />
     <ClCompile Include="GetPathToProgramDirectory.cpp" />
     <ClCompile Include="GWCA_UIMgr_Extensions.cpp" />
     <ClCompile Include="GWSM.cpp" />

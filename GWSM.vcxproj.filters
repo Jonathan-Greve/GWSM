@@ -30,7 +30,6 @@
     <ClCompile Include="AgentUtils.cpp">
       <Filter>Utils</Filter>
     </ClCompile>
-    <ClCompile Include="bag_and_item_utils.cpp" />
     <ClCompile Include="ItemCallbacks.cpp">
       <Filter>Packet callbacks</Filter>
     </ClCompile>
@@ -45,6 +44,15 @@
     </ClCompile>
     <ClCompile Include="UpdateNavMesh.cpp">
       <Filter>Update functions\NavMesh</Filter>
+    </ClCompile>
+    <ClCompile Include="bag_and_item_utils.cpp">
+      <Filter>Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="DialogsManager.cpp">
+      <Filter>GW interaction</Filter>
+    </ClCompile>
+    <ClCompile Include="EncString.cpp">
+      <Filter>Utils</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -79,7 +87,6 @@
     <ClInclude Include="AgentUtils.h">
       <Filter>Utils</Filter>
     </ClInclude>
-    <ClInclude Include="bag_and_item_utils.h" />
     <ClInclude Include="ItemCallbacks.h">
       <Filter>Packet callbacks</Filter>
     </ClInclude>
@@ -94,6 +101,15 @@
     </ClInclude>
     <ClInclude Include="UpdateNavMesh.h">
       <Filter>Update functions\NavMesh</Filter>
+    </ClInclude>
+    <ClInclude Include="bag_and_item_utils.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="DialogsManager.h">
+      <Filter>GW interaction</Filter>
+    </ClInclude>
+    <ClInclude Include="EncString.h">
+      <Filter>Utils</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
