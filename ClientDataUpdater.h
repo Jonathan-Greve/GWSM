@@ -14,7 +14,7 @@ public:
 
     void update(const UpdateStatus update_status, const GWIPC::UpdateOptions* update_options,
                 const bool inventory_or_equipment_changed, const bool quests_changed,
-                std::string& nav_mesh_file_path, DialogsManager& dialogs_manager)
+                std::string& nav_mesh_file_path)
     {
         const auto quests_decoding_size = current_quest_strs_decoding.size();
         const auto bag_items_decoding_size = current_bag_item_strs_decoding.size();
@@ -210,7 +210,7 @@ public:
         }
 
         flatbuffers::Offset<GWIPC::DialogsInfo> dialogs_info;
-        build_dialogs_info(builder_, dialogs_info, dialogs_manager);
+        build_dialogs_info(builder_, dialogs_info);
 
         auto nav_mesh_file_path_fb = builder_.CreateString(nav_mesh_file_path);
 
@@ -797,18 +797,18 @@ private:
     }
 
     void build_dialogs_info(flatbuffers::FlatBufferBuilder& builder,
-                            flatbuffers::Offset<GWIPC::DialogsInfo> dialogs_info,
-                            DialogsManager& dialogs_manager)
+                            flatbuffers::Offset<GWIPC::DialogsInfo> dialogs_info)
     {
-        const auto& dialog_messages = dialogs_manager.GetDialogButtonMessages();
-        const auto& dialog_button_infos = dialogs_manager.GetDialogButtons();
+        const auto& dialog_messages = DialogsManager::Instance().GetDialogButtonMessages();
+        const auto& dialog_button_infos = DialogsManager::Instance().GetDialogButtons();
 
-        const auto dialog_curr_agent_id = dialogs_manager.GetDialogAgentId();
-        const auto dialog_last_agent_id = dialogs_manager.last_agent_id;
+        const auto dialog_curr_agent_id = DialogsManager::Instance().GetDialogAgentId();
+        const auto dialog_last_agent_id = DialogsManager::Instance().GetLastDialogAgentId();
 
         const auto last_dialog_id = GW::Agents::GetLastDialogId();
 
-        auto dialog_body_message_offset = builder.CreateString(dialogs_manager.dialog_body.string());
+        auto dialog_body_message_offset =
+          builder.CreateString(DialogsManager::Instance().GetDialogBody()->string());
 
         std::vector<flatbuffers::Offset<GWIPC::GWDialog>> gw_dialogs_vector;
         for (size_t i = 0; i < dialog_messages.size(); i++)

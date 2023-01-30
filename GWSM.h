@@ -47,7 +47,6 @@ public:
 
     ItemCallbacks item_callsbacks_;
     QuestCallbacks quest_callsbacks_;
-    DialogsManager dialogs_manager_;
 
 private:
     GWSM()

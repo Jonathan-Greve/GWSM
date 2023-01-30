@@ -7,7 +7,15 @@ GW::UI::UIInteractionCallback NPCDialogUICallback_Ret = nullptr;
 std::vector<GW::UI::DialogButtonInfo*> dialog_buttons;
 std::vector<EncString*> dialog_button_messages;
 
-void DialogsManager::OnDialogButtonAdded(GW::UI::DialogButtonInfo* wparam)
+GW::UI::DialogBodyInfo dialog_info;
+uint32_t last_agent_id = 0;
+EncString dialog_body;
+
+GW::HookEntry dialog_hook;
+
+std::map<uint32_t, clock_t> queued_dialogs_to_send;
+
+void OnDialogButtonAdded(GW::UI::DialogButtonInfo* wparam)
 {
     const auto button_info = new GW::UI::DialogButtonInfo();
     memcpy(button_info, wparam, sizeof(*button_info));
@@ -17,12 +25,9 @@ void DialogsManager::OnDialogButtonAdded(GW::UI::DialogButtonInfo* wparam)
 
     dialog_button_messages.push_back(button_message);
     dialog_buttons.push_back(button_info);
-
-    // Start decoding (async, non-blocking)
-    button_message->string();
 }
 // Parse any buttons held within the dialog body
-void DialogsManager::OnDialogBodyDecoded(void*, wchar_t* decoded)
+void OnDialogBodyDecoded(void*, wchar_t* decoded)
 {
     const std::wregex button_regex(L"<a=([0-9]+)>([^<]+)<");
     std::wsmatch m;
@@ -50,7 +55,7 @@ void DialogsManager::OnDialogBodyDecoded(void*, wchar_t* decoded)
     }
 }
 // Wipe dialog ready for new one
-void DialogsManager::ResetDialog()
+void ResetDialog()
 {
     for (const auto d : dialog_buttons)
     {
@@ -63,7 +68,7 @@ void DialogsManager::ResetDialog()
     }
     dialog_button_messages.clear();
 }
-void DialogsManager::OnNPCDialogUICallback(GW::UI::InteractionMessage* message, void* wparam, void* lparam)
+void OnNPCDialogUICallback(GW::UI::InteractionMessage* message, void* wparam, void* lparam)
 {
     GW::HookBase::EnterHook();
     if (message->message_id == 0xb)
@@ -76,7 +81,7 @@ void DialogsManager::OnNPCDialogUICallback(GW::UI::InteractionMessage* message, 
     NPCDialogUICallback_Ret(message, wparam, lparam);
     GW::HookBase::LeaveHook();
 }
-void DialogsManager::OnDialogClosedByServer()
+void OnDialogClosedByServer()
 {
     if (queued_dialogs_to_send.empty())
         return;
@@ -85,7 +90,7 @@ void DialogsManager::OnDialogClosedByServer()
     if (npc && me && GW::GetDistance(npc->pos, me->pos) < GW::Constants::Range::Area)
         GW::Agents::GoNPC(npc);
 }
-bool DialogsManager::IsDialogButtonAvailable(uint32_t dialog_id)
+bool IsDialogButtonAvailable(uint32_t dialog_id)
 {
     return std::ranges::any_of(
       dialog_buttons, [dialog_id](const GW::UI::DialogButtonInfo* d) { return d->dialog_id == dialog_id; });
@@ -122,7 +127,7 @@ void DialogsManager::OnPreUIMessage(GW::HookStatus* status, GW::UI::UIMessage me
     }
 }
 
-bool DialogsManager::ParseUInt(const char* str, unsigned int* val, int base)
+bool ParseUInt(const char* str, unsigned int* val, int base)
 {
     char* end;
     if (! str)
@@ -134,7 +139,7 @@ bool DialogsManager::ParseUInt(const char* str, unsigned int* val, int base)
         return true;
 }
 
-bool DialogsManager::ParseUInt(const wchar_t* str, unsigned int* val, int base)
+bool ParseUInt(const wchar_t* str, unsigned int* val, int base)
 {
     wchar_t* end;
     if (! str)
@@ -170,7 +175,7 @@ void DialogsManager::OnPostUIMessage(GW::HookStatus* status, GW::UI::UIMessage m
         // Decode
         dialog_body.string();
 
-        GW::UI::AsyncDecodeStr(dialog_info.message_enc, DialogsManager::OnDialogBodyDecoded);
+        GW::UI::AsyncDecodeStr(dialog_info.message_enc, OnDialogBodyDecoded);
     }
     break;
     case GW::UI::UIMessage::kDialogButton:
@@ -229,26 +234,17 @@ bool DialogsManager::Initialize()
       GW::UI::UIMessage::kSendDialog, GW::UI::UIMessage::kDialogBody, GW::UI::UIMessage::kDialogButton};
     for (const auto message_id : dialog_ui_messages)
     {
-        GW::UI::RegisterUIMessageCallback(
-          &dialog_hook, message_id,
-          [this](GW::HookStatus* status, GW::UI::UIMessage message_id, void* wparam, void* lparam)
-          { DialogsManager::OnPreUIMessage(status, message_id, wparam, nullptr); },
-          -0x1);
-        GW::UI::RegisterUIMessageCallback(
-          &dialog_hook, message_id,
-          [this](GW::HookStatus* status, GW::UI::UIMessage message_id, void* wparam, void* lparam)
-          { DialogsManager::OnPostUIMessage(status, message_id, wparam, nullptr); },
-          0x500);
+        GW::UI::RegisterUIMessageCallback(&dialog_hook, message_id, OnPreUIMessage, -0x1);
+        GW::UI::RegisterUIMessageCallback(&dialog_hook, message_id, OnPostUIMessage, 0x500);
     }
+    // NB: Can also be found via floating dialogs array in memory. We're not using hooks for any of the other floating dialogs, but would be good to document later.
+    NPCDialogUICallback_Func = reinterpret_cast<GW::UI::UIInteractionCallback>(GW::Scanner::FindAssertion(
+      R"(p:\code\gw\ui\game\gmnpc.cpp)", "interactMsg.codedText && interactMsg.codedText[0]", -0xfb));
     if (NPCDialogUICallback_Func)
     {
-        auto on_npc_dialog_lambda = [this](GW::UI::InteractionMessage* message, void* wparam, void* lparam)
-        { DialogsManager::OnNPCDialogUICallback(message, wparam, lparam); };
-
-        GW::HookBase::CreateHook(NPCDialogUICallback_Func, &on_npc_dialog_lambda,
+        GW::HookBase::CreateHook(NPCDialogUICallback_Func, OnNPCDialogUICallback,
                                  reinterpret_cast<void**>(&NPCDialogUICallback_Ret));
         GW::HookBase::EnableHooks(NPCDialogUICallback_Func);
-
         return true;
     }
 
@@ -339,12 +335,9 @@ void DialogsManager::Update(float)
     }
 }
 
-const wchar_t* DialogsManager::GetDialogBody() const { return dialog_body.encoded().c_str(); }
+EncString* DialogsManager::GetDialogBody() { return &dialog_body; }
 
-const std::vector<EncString*>& DialogsManager::GetDialogButtonMessages() const
-{
-    return dialog_button_messages;
-}
+const std::vector<EncString*>& DialogsManager::GetDialogButtonMessages() { return dialog_button_messages; }
 
 const uint32_t DialogsManager::AcceptFirstAvailableQuest()
 {
@@ -385,25 +378,7 @@ const uint32_t DialogsManager::AcceptFirstAvailableQuest()
     return 0;
 }
 
-const uint32_t DialogsManager::GetDialogAgentId() const { return dialog_info.agent_id; }
+const uint32_t DialogsManager::GetDialogAgentId() { return dialog_info.agent_id; }
+const uint32_t DialogsManager::GetLastDialogAgentId() { return last_agent_id; }
 
-const std::vector<GW::UI::DialogButtonInfo*>& DialogsManager::GetDialogButtons() const
-{
-    return dialog_buttons;
-}
-
-namespace GW
-{
-bool GW::InitDialogFuncs()
-{
-    NPCDialogUICallback_Func = reinterpret_cast<GW::UI::UIInteractionCallback>(GW::Scanner::FindAssertion(
-      R"(p:\code\gw\ui\game\gmnpc.cpp)", "interactMsg.codedText && interactMsg.codedText[0]", -0xfb));
-
-    if (NPCDialogUICallback_Func)
-    {
-        return true;
-    }
-
-    return false;
-}
-}
+const std::vector<GW::UI::DialogButtonInfo*>& DialogsManager::GetDialogButtons() { return dialog_buttons; }

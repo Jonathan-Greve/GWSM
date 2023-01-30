@@ -11,7 +11,7 @@
 DWORD __stdcall ThreadEntry(LPVOID)
 {
     GW::HookBase::Initialize();
-    if (! GW::Initialize() || ! GW::InitUIExtensions() || ! GW::InitDialogFuncs())
+    if (! GW::Initialize() || ! GW::InitUIExtensions() || ! DialogsManager::Instance().Initialize())
     {
         if (MessageBoxA(nullptr, "Initialize Failed at finding all addresses.", "GW API Error", 0) == IDOK)
         {
