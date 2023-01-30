@@ -14,7 +14,7 @@ public:
 
     void update(const UpdateStatus update_status, const GWIPC::UpdateOptions* update_options,
                 const bool inventory_or_equipment_changed, const bool quests_changed,
-                std::string& nav_mesh_file_path)
+                std::string& nav_mesh_file_path, DialogsManager& dialogs_manager)
     {
         const auto quests_decoding_size = current_quest_strs_decoding.size();
         const auto bag_items_decoding_size = current_bag_item_strs_decoding.size();
@@ -209,14 +209,15 @@ public:
             }
         }
 
-        flatbuffers::Offset<GWIPC::GWDialogs> dialogs;
+        flatbuffers::Offset<GWIPC::DialogsInfo> dialogs_info;
+        build_dialogs_info(builder_, dialogs_info);
 
         auto nav_mesh_file_path_fb = builder_.CreateString(nav_mesh_file_path);
 
         // Create the ClientData object
         auto client_data =
           GWIPC::CreateClientData(builder_, character, instance, party, update_status.game_state, quests,
-                                  bags, equipped_items, dialogs, nav_mesh_file_path_fb);
+                                  bags, equipped_items, dialogs_info, nav_mesh_file_path_fb);
 
         // Finish creating the flatbuffer and retrieve a pointer to the buffer
         builder_.Finish(client_data);
@@ -793,6 +794,11 @@ private:
 
             bag_items = builder.CreateVector(bag_items_vector);
         }
+    }
+
+    void build_dialogs_info(flatbuffers::FlatBufferBuilder& builder,
+                            flatbuffers::Offset<GWIPC::DialogsInfo> dialogs_info)
+    {
     }
 
     flatbuffers::Offset<GWIPC::BagItem> create_bag_item_from_values(

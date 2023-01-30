@@ -162,7 +162,8 @@ void GWSM::Update(GW::HookStatus*)
           gwsm_instance.item_callsbacks_.inventory_or_equipment_changed.exchange(false);
         const auto quests_changed = gwsm_instance.quest_callsbacks_.quests_changed.exchange(false);
 
-        gwsm_instance.client_data_updater_.update(
-          update_status, update_options, inventory_or_equipment_changed, quests_changed, nav_mesh_file_path);
+        gwsm_instance.client_data_updater_.update(update_status, update_options,
+                                                  inventory_or_equipment_changed, quests_changed,
+                                                  nav_mesh_file_path, gwsm_instance.dialogs_manager_);
     }
 }

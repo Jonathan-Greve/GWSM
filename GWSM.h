@@ -47,6 +47,7 @@ public:
 
     ItemCallbacks item_callsbacks_;
     QuestCallbacks quest_callsbacks_;
+    DialogsManager dialogs_manager_;
 
 private:
     GWSM()
@@ -56,8 +57,6 @@ private:
         , update_options_manager_(player_email_){};
 
     std::string player_email_;
-
-    DialogsManager dialogs_manager_;
 
     GWIPC::ConnectionManager connection_manager_;
     GWIPC::UpdateOptionsManager update_options_manager_;
