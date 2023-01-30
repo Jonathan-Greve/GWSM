@@ -210,7 +210,7 @@ public:
         }
 
         flatbuffers::Offset<GWIPC::DialogsInfo> dialogs_info;
-        build_dialogs_info(builder_, dialogs_info);
+        build_dialogs_info(builder_, dialogs_info, dialogs_manager);
 
         auto nav_mesh_file_path_fb = builder_.CreateString(nav_mesh_file_path);
 
@@ -797,8 +797,41 @@ private:
     }
 
     void build_dialogs_info(flatbuffers::FlatBufferBuilder& builder,
-                            flatbuffers::Offset<GWIPC::DialogsInfo> dialogs_info)
+                            flatbuffers::Offset<GWIPC::DialogsInfo> dialogs_info,
+                            DialogsManager& dialogs_manager)
     {
+        const auto& dialog_messages = dialogs_manager.GetDialogButtonMessages();
+        const auto& dialog_button_infos = dialogs_manager.GetDialogButtons();
+
+        const auto dialog_curr_agent_id = dialogs_manager.GetDialogAgentId();
+        const auto dialog_last_agent_id = dialogs_manager.last_agent_id;
+
+        const auto last_dialog_id = GW::Agents::GetLastDialogId();
+
+        auto dialog_body_message_offset = builder.CreateString(dialogs_manager.dialog_body.string());
+
+        std::vector<flatbuffers::Offset<GWIPC::GWDialog>> gw_dialogs_vector;
+        for (size_t i = 0; i < dialog_messages.size(); i++)
+        {
+            const auto& dialog_message = dialog_messages[i];
+            const auto& dialog_button = dialog_button_infos[i];
+
+            auto dialog_message_offset = builder.CreateString(dialog_message->string());
+
+            GWIPC::GWDialogBuilder gw_dialog_builder(builder);
+            gw_dialog_builder.add_id(dialog_button->dialog_id);
+            gw_dialog_builder.add_button_icon_id(dialog_button->button_icon);
+            gw_dialog_builder.add_skill_id(dialog_button->skill_id);
+            gw_dialog_builder.add_text(dialog_message_offset);
+
+            auto new_gw_dialog = gw_dialog_builder.Finish();
+            gw_dialogs_vector.emplace_back(new_gw_dialog);
+        }
+
+        auto gw_dialogs = builder.CreateVector(gw_dialogs_vector);
+
+        dialogs_info = GWIPC::CreateDialogsInfo(builder, gw_dialogs, last_dialog_id, dialog_curr_agent_id,
+                                                dialog_last_agent_id);
     }
 
     flatbuffers::Offset<GWIPC::BagItem> create_bag_item_from_values(

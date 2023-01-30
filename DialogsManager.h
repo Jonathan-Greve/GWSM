@@ -21,19 +21,21 @@ public:
     void Terminate();
     void Update(float);
 
-    const wchar_t* GetDialogBody();
+    const wchar_t* GetDialogBody() const;
+    const uint32_t GetDialogAgentId() const;
+    const std::vector<GW::UI::DialogButtonInfo*>& GetDialogButtons() const;
+    const std::vector<EncString*>& GetDialogButtonMessages() const;
+
     void SendDialog(uint32_t dialog_id);
     void SendDialogs(std::initializer_list<uint32_t> dialog_ids);
-    uint32_t GetDialogAgent();
-    const std::vector<GW::UI::DialogButtonInfo*>& GetDialogButtons();
-    const std::vector<EncString*>& GetDialogButtonMessages();
     // Find and take the first available quest from the current dialog. Returns quest_id requested.
-    uint32_t AcceptFirstAvailableQuest();
+    const uint32_t AcceptFirstAvailableQuest();
+
+    EncString dialog_body;
+    uint32_t last_agent_id = 0;
 
 private:
     GW::UI::DialogBodyInfo dialog_info;
-    uint32_t last_agent_id = 0;
-    EncString dialog_body;
 
     GW::HookEntry dialog_hook;
 

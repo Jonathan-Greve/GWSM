@@ -322,7 +322,7 @@ void DialogsManager::Update(float)
             queued_dialogs_to_send.erase(it);
             break;
         }
-        if (! GetDialogAgent())
+        if (! GetDialogAgentId())
             continue;
         if (it->first == 0)
         {
@@ -339,11 +339,14 @@ void DialogsManager::Update(float)
     }
 }
 
-const wchar_t* DialogsManager::GetDialogBody() { return dialog_body.encoded().c_str(); }
+const wchar_t* DialogsManager::GetDialogBody() const { return dialog_body.encoded().c_str(); }
 
-const std::vector<EncString*>& DialogsManager::GetDialogButtonMessages() { return dialog_button_messages; }
+const std::vector<EncString*>& DialogsManager::GetDialogButtonMessages() const
+{
+    return dialog_button_messages;
+}
 
-uint32_t DialogsManager::AcceptFirstAvailableQuest()
+const uint32_t DialogsManager::AcceptFirstAvailableQuest()
 {
     if (dialog_buttons.empty())
         return 0;
@@ -382,9 +385,12 @@ uint32_t DialogsManager::AcceptFirstAvailableQuest()
     return 0;
 }
 
-uint32_t DialogsManager::GetDialogAgent() { return dialog_info.agent_id; }
+const uint32_t DialogsManager::GetDialogAgentId() const { return dialog_info.agent_id; }
 
-const std::vector<GW::UI::DialogButtonInfo*>& DialogsManager::GetDialogButtons() { return dialog_buttons; }
+const std::vector<GW::UI::DialogButtonInfo*>& DialogsManager::GetDialogButtons() const
+{
+    return dialog_buttons;
+}
 
 namespace GW
 {
