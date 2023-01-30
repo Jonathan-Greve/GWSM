@@ -164,15 +164,21 @@ class ChatWriter
     }
 
 public:
+    static void WriteIngameDebugChat(std::wstring chat_message)
+    {
+        std::wstring init_message = std::format(L"<c=#FFFFFF>: {}</c>", chat_message);
+
+        GW::Chat::WriteChat(GW::Chat::CHANNEL_GWCA2, init_message.c_str(), nullptr);
+    }
+
     static void WriteIngameDebugChat(std::string chat_message)
     {
         if (chat_message.size() == 0)
             return;
 
         std::wstring wide_chat_message(chat_message.begin(), chat_message.end());
-        std::wstring init_message = std::format(L"<c=#FFFFFF>: {}</c>", wide_chat_message);
 
-        GW::Chat::WriteChat(GW::Chat::CHANNEL_GWCA2, init_message.c_str(), nullptr);
+        ChatWriter::WriteIngameDebugChat(wide_chat_message);
     }
 
     static void WriteIngameDebugChat(std::string chat_message, std::string hex_color)

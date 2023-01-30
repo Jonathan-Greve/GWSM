@@ -57,6 +57,8 @@ private:
 
     std::string player_email_;
 
+    DialogsManager dialogs_manager_;
+
     GWIPC::ConnectionManager connection_manager_;
     GWIPC::UpdateOptionsManager update_options_manager_;
 

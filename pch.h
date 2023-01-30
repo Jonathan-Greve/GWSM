@@ -88,6 +88,7 @@
 #include "ItemCallbacks.h"
 #include "QuestCallbacks.h"
 #include "EncString.h"
+#include "DialogsManager.h"
 #include "GWCA_UIMgr_Extensions.h"
 
 #endif //PCH_H

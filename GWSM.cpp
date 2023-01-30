@@ -36,6 +36,12 @@ void GWSM::Init()
         Terminate();
     }
 
+    if (! dialogs_manager_.Initialize())
+    {
+        ChatWriter::WriteIngameDebugChat("Init: Failed initializing DialogsManager.", ChatColor::DarkRed);
+        Terminate();
+    }
+
     if (! item_callsbacks_.init())
     {
         ChatWriter::WriteIngameDebugChat("Init: Failed initializing ItemCallbacks.", ChatColor::DarkRed);
@@ -69,6 +75,8 @@ void GWSM::Terminate()
     {
         connection_manager_.disconnect();
         connection_manager_.terminate();
+
+        dialogs_manager_.Terminate();
 
         GW::GameThread::RemoveGameThreadCallback(&Update_Entry);
 
@@ -140,6 +148,8 @@ void GWSM::Update(GW::HookStatus*)
                 GW::UI::Keypress(GW::UI::ControlAction_OpenQuestLog);
 
             nav_mesh_file_path = update_nav_mesh();
+
+            gwsm_instance.dialogs_manager_.Update(0);
 
             update_status.game_state = GWIPC::GameState::GameState_InGame;
         }

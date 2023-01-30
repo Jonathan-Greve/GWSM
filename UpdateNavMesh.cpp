@@ -3,6 +3,8 @@
 
 std::map<uint32_t, std::string> existing_nav_mesh_file_paths;
 
+std::string empty_str;
+
 const std::string& update_nav_mesh()
 {
     const GW::CharContext* const char_context = GW::GetCharContext();
@@ -71,7 +73,8 @@ const std::string& update_nav_mesh()
             return existing_nav_mesh_file_paths[map_id];
         }
     }
-    return "";
+
+    return empty_str;
 }
 
 void make_nav_mesh(flatbuffers::FlatBufferBuilder& builder_, flatbuffers::Offset<GWIPC::NavMesh>& nav_mesh)

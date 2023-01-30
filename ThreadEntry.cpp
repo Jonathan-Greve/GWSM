@@ -11,16 +11,13 @@
 DWORD __stdcall ThreadEntry(LPVOID)
 {
     GW::HookBase::Initialize();
-    if (! GW::Initialize() || ! GW::InitUIExtensions())
+    if (! GW::Initialize() || ! GW::InitUIExtensions() || ! GW::InitDialogFuncs())
     {
-        if (MessageBoxA(nullptr, "Initialize Failed at finding all addresses, contact Developers about this.",
-                        "GWToolbox++ API Error", 0) == IDOK)
+        if (MessageBoxA(nullptr, "Initialize Failed at finding all addresses.", "GW API Error", 0) == IDOK)
         {
         }
         goto leave;
     }
-
-    // Initialize GWCA extensions
 
     GW::HookBase::EnableHooks();
     GW::GameThread::Enqueue([]() { GWSM::Instance().Init(); });
