@@ -77,6 +77,8 @@ void GWSM::Terminate()
         item_callsbacks_.terminate();
         quest_callsbacks_.terminate();
 
+        DialogsManager::Terminate();
+
         UnhookWindowsHookEx(keyboard_hook_handle);
 
         // Restore the window handle to be the default one that GW launched with.
