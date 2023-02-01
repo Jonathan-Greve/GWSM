@@ -540,9 +540,31 @@ private:
                     heroes_vector.push_back(fb_hero);
                 }
 
+                std::vector<flatbuffers::Offset<GWIPC::AgentLiving>> extra_npcs_vector;
+                for (const auto extra_npc_agent_id : player_party->others)
+                {
+                    auto npc_agent = GW::Agents::GetAgentByID(extra_npc_agent_id);
+                    if (npc_agent)
+                    {
+                        auto npc_agent_living = npc_agent->GetAsAgentLiving();
+                        if (npc_agent_living)
+                        {
+                            GWIPC::AgentLivingBuilder agent_living_builder(builder);
+                            build_agent_living(npc_agent_living, agent_living_builder);
+                            agent_living_builder.add_party_slot(
+                              get_party_slot_from_agent_id(npc_agent->agent_id));
+
+                            auto agent_living = agent_living_builder.Finish();
+
+                            extra_npcs_vector.push_back(agent_living);
+                        }
+                    }
+                }
+
                 auto players = builder.CreateVector(players_vector);
                 auto henchmen = builder.CreateVector(henchmen_vector);
                 auto heroes = builder.CreateVector(heroes_vector);
+                auto extra_npcs = builder.CreateVector(extra_npcs_vector);
 
                 std::vector<flatbuffers::Offset<GWIPC::MissionObjective>> mission_objective_vector;
                 const auto world_context = GW::GetWorldContext();
@@ -588,6 +610,7 @@ private:
                 party_builder.add_hero_members(heroes);
                 party_builder.add_player_members(players);
                 party_builder.add_henchman_members(henchmen);
+                party_builder.add_extra_npc_members(extra_npcs);
                 party_builder.add_mission_objectives(mission_objectives);
 
                 if (world_context)
