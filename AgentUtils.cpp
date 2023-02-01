@@ -37,6 +37,12 @@ std::vector<uint32_t> get_party_agent_ids()
         {
             party_agent_ids.push_back(party->henchmen[i].agent_id);
         }
+
+        // The ordering of these differ between the players in the party.
+        for (uint32_t i = 0; i < party->others.m_size; i++)
+        {
+            party_agent_ids.push_back(party->others[i]);
+        }
     }
     return party_agent_ids;
 }
