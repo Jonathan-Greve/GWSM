@@ -17,6 +17,7 @@ public:
     {
         const auto quests_decoding_size = current_quest_strs_decoding.size();
         const auto bag_items_decoding_size = current_bag_item_strs_decoding.size();
+        const auto items_decoding_size = current_item_strs_decoding.size();
 
         // Create a flatbuffer builder object
         builder_.Clear();
@@ -210,7 +211,7 @@ public:
         elapsed_time =
           std::chrono::duration_cast<std::chrono::seconds>(current_time - last_build_agent_items_time_)
             .count();
-        if (buffer_.empty() || items_changed || bag_items_decoding_size > 0 || elapsed_time >= 60)
+        if (buffer_.empty() || items_changed || items_decoding_size > 0 || elapsed_time >= 60)
         {
             if (items_changed)
             {
@@ -262,6 +263,56 @@ public:
             }
         }
 
+        flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<GWIPC::AgentGadget>>> gadgets;
+        //elapsed_time =
+        //  std::chrono::duration_cast<std::chrono::seconds>(current_time - last_build_agent_gadgets_time_)
+        //    .count();
+        //if (buffer_.empty() || items_changed || bag_items_decoding_size > 0 || elapsed_time >= 60)
+        //{
+        //    if (items_changed)
+        //    {
+        //        gadget_strs_.clear();
+        //    }
+
+        build_agent_gadgets(builder_, gadgets);
+        //    last_build_agent_gadgets_time_ = std::chrono::system_clock::now();
+        //}
+        //else
+        //{
+        //    const auto client_data = GWIPC::GetClientData(buffer_.data());
+        //    if (client_data)
+        //    {
+        //        const auto agent_gadgets = client_data->gadgets();
+        //        if (agent_gadgets)
+        //        {
+        //            std::vector<flatbuffers::Offset<GWIPC::AgentGadget>> agent_gadgets_vector;
+        //            for (uint32_t j = 0; j < agent_gadgets->size(); j++)
+        //            {
+        //                auto agent_gadget = agent_gadgets->Get(j);
+        //                if (agent_gadget)
+        //                {
+        //                    auto agent = agent_gadget->agent();
+        //                    if (agent && GW::Agents::GetAgentByID(agent->agent_id()))
+        //                    {
+        //                        auto name = builder_.CreateString(agent_gadget->name()->str());
+
+        //                        auto agent_gadget_builder = GWIPC::AgentGadgetBuilder(builder_);
+        //                        agent_gadget_builder.add_agent(agent);
+        //                        agent_gadget_builder.add_name(name);
+        //                        agent_gadget_builder.add_gadget_id(agent_gadget->gadget_id());
+        //                        agent_gadget_builder.add_extra_type(agent_gadget->extra_type());
+
+        //                        auto new_agent_gadget = agent_gadget_builder.Finish();
+
+        //                        agent_gadgets_vector.emplace_back(new_agent_gadget);
+        //                    }
+        //                }
+        //            }
+        //            gadgets = builder_.CreateVector(agent_gadgets_vector);
+        //        }
+        //    }
+        //}
+
         flatbuffers::Offset<GWIPC::DialogsInfo> dialogs_info;
         build_dialogs_info(builder_, dialogs_info);
 
@@ -270,7 +321,7 @@ public:
         // Create the ClientData object
         auto client_data =
           GWIPC::CreateClientData(builder_, character, instance, party, update_status.game_state, quests,
-                                  bags, equipped_items, dialogs_info, nav_mesh_file_path_fb, items);
+                                  bags, equipped_items, dialogs_info, nav_mesh_file_path_fb, items, gadgets);
 
         // Finish creating the flatbuffer and retrieve a pointer to the buffer
         builder_.Finish(client_data);
@@ -298,6 +349,7 @@ private:
     std::chrono::time_point<std::chrono::system_clock> last_build_bags_time_;
     std::chrono::time_point<std::chrono::system_clock> last_build_equipped_items_time_;
     std::chrono::time_point<std::chrono::system_clock> last_build_agent_items_time_;
+    std::chrono::time_point<std::chrono::system_clock> last_build_agent_gadgets_time_;
 
     struct QuestStrings
     {
@@ -328,6 +380,10 @@ private:
     // (model_id, mod) => ItemStrings;
     std::map<std::pair<uint32_t, uint32_t>, ItemStrings> item_strs_;
     std::set<std::pair<uint32_t, uint32_t>> current_item_strs_decoding;
+
+    // Gadget_id
+    std::map<uint32_t, std::wstring> gadget_strs_;
+    std::set<uint32_t> current_gadget_strs_decoding;
 
     std::set<uint32_t> already_called_changequest_ids;
 
@@ -936,30 +992,30 @@ private:
                     const auto item = (*bag_array)[i];
                     if (item)
                     {
-                        std::pair<uint32_t, uint32_t> key(item->model_id, item->mod_struct->mod);
-                        const auto it = item_strs_.find(key);
-                        if (it != item_strs_.end())
+                        auto found_agent_item_it =
+                          std::find_if(gw_agent_items.begin(), gw_agent_items.end(),
+                                       [&](const GW::AgentItem* agent_item)
+                                       { return agent_item->item_id == item->item_id; });
+                        if (found_agent_item_it != std::end(gw_agent_items))
                         {
-                            if ((! item->info_string || it->second.description != L"") &&
-                                it->second.full_name != L"" && it->second.name != L"" &&
-                                it->second.single_item_name != L"")
+                            std::pair<uint32_t, uint32_t> key(item->model_id, item->mod_struct->mod);
+                            const auto it = item_strs_.find(key);
+                            if (it != item_strs_.end())
                             {
-                                current_item_strs_decoding.erase(key);
-
-                                auto new_item = create_item_from_values(
-                                  builder, wstr_to_str(it->second.description.c_str()),
-                                  wstr_to_str(it->second.full_name.c_str()),
-                                  wstr_to_str(it->second.single_item_name.c_str()),
-                                  wstr_to_str(it->second.name.c_str()), item->interaction, false,
-                                  item->item_id, item->mod_struct ? item->mod_struct->mod : 0, item->model_id,
-                                  item->quantity, item->type, item->value, -1);
-
-                                auto found_agent_item_it =
-                                  std::find_if(gw_agent_items.begin(), gw_agent_items.end(),
-                                               [&](const GW::AgentItem* agent_item)
-                                               { return agent_item->item_id == item->item_id; });
-                                if (found_agent_item_it != std::end(gw_agent_items))
+                                if ((! item->info_string || it->second.description != L"") &&
+                                    it->second.full_name != L"" && it->second.name != L"" &&
+                                    it->second.single_item_name != L"")
                                 {
+                                    current_item_strs_decoding.erase(key);
+
+                                    auto new_item = create_item_from_values(
+                                      builder, wstr_to_str(it->second.description.c_str()),
+                                      wstr_to_str(it->second.full_name.c_str()),
+                                      wstr_to_str(it->second.single_item_name.c_str()),
+                                      wstr_to_str(it->second.name.c_str()), item->interaction, false,
+                                      item->item_id, item->mod_struct ? item->mod_struct->mod : 0,
+                                      item->model_id, item->quantity, item->type, item->value, -1);
+
                                     auto agent_item = *found_agent_item_it;
 
                                     auto position = GWIPC::Vec3(agent_item->x, -agent_item->z, agent_item->y);
@@ -985,26 +1041,27 @@ private:
                                     agent_items_vector.emplace_back(new_agent_item);
                                 }
                             }
-                        }
-                        else
-                        {
-                            if (item->name_enc && item->complete_name_enc && item->single_item_name)
-                            {
-                                auto insert_it = item_strs_.emplace(key, ItemStrings());
-                                if (item->info_string)
-                                    GW::UI::AsyncDecodeStr(item->info_string,
-                                                           &(*insert_it.first).second.description);
-                                GW::UI::AsyncDecodeStr(item->complete_name_enc,
-                                                       &(*insert_it.first).second.full_name);
-                                GW::UI::AsyncDecodeStr(item->name_enc, &(*insert_it.first).second.name);
-                                GW::UI::AsyncDecodeStr(item->single_item_name,
-                                                       &(*insert_it.first).second.single_item_name);
-                                current_item_strs_decoding.emplace(key);
-                            }
                             else
                             {
-                                ChatWriter::WriteIngameDebugChat(
-                                  "build_agent_items: Could not decode strings for item.", ChatColor::Blue);
+                                if (item->name_enc && item->complete_name_enc && item->single_item_name)
+                                {
+                                    auto insert_it = item_strs_.emplace(key, ItemStrings());
+                                    if (item->info_string)
+                                        GW::UI::AsyncDecodeStr(item->info_string,
+                                                               &(*insert_it.first).second.description);
+                                    GW::UI::AsyncDecodeStr(item->complete_name_enc,
+                                                           &(*insert_it.first).second.full_name);
+                                    GW::UI::AsyncDecodeStr(item->name_enc, &(*insert_it.first).second.name);
+                                    GW::UI::AsyncDecodeStr(item->single_item_name,
+                                                           &(*insert_it.first).second.single_item_name);
+                                    current_item_strs_decoding.emplace(key);
+                                }
+                                else
+                                {
+                                    ChatWriter::WriteIngameDebugChat(
+                                      "build_agent_items: Could not decode strings for item.",
+                                      ChatColor::Blue);
+                                }
                             }
                         }
                     }
@@ -1012,6 +1069,72 @@ private:
 
                 agent_items = builder.CreateVector(agent_items_vector);
             }
+        }
+    }
+
+    void build_agent_gadgets(
+      flatbuffers::FlatBufferBuilder& builder,
+      flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<GWIPC::AgentGadget>>>& agent_gadgets)
+    {
+        const auto agents = GW::Agents::GetAgentArray();
+        if (agents && agents->valid())
+        {
+            std::vector<flatbuffers::Offset<GWIPC::AgentGadget>> agent_gadgets_vector;
+            for (const auto* const agent : *agents)
+            {
+                if (agent && agent->GetIsGadgetType())
+                {
+                    auto agent_gadget = agent->GetAsAgentGadget();
+
+                    uint32_t key = agent_gadget->gadget_id;
+
+                    const auto it = gadget_strs_.find(key);
+                    if (it != gadget_strs_.end())
+                    {
+                        if (it->second != L"")
+                        {
+                            current_gadget_strs_decoding.erase(key);
+
+                            auto position = GWIPC::Vec3(agent_gadget->x, -agent_gadget->z, agent_gadget->y);
+                            auto terrain_normal =
+                              GWIPC::Vec3(agent_gadget->terrain_normal.x, -agent_gadget->terrain_normal.z,
+                                          agent_gadget->terrain_normal.y);
+                            auto velocity = GWIPC::Vec2(agent_gadget->velocity.x, agent_gadget->velocity.y);
+
+                            GWIPC::Agent agent(agent_gadget->agent_id, position, terrain_normal,
+                                               agent_gadget->rotation_angle, velocity, agent_gadget->width1,
+                                               agent_gadget->height1, agent_gadget->timer);
+
+                            auto name = builder.CreateString(wstr_to_str(it->second.c_str()));
+                            auto agent_gadget_builder = GWIPC::AgentGadgetBuilder(builder);
+                            agent_gadget_builder.add_agent(&agent);
+                            agent_gadget_builder.add_name(name);
+                            agent_gadget_builder.add_gadget_id(agent_gadget->gadget_id);
+                            agent_gadget_builder.add_extra_type(agent_gadget->extra_type);
+
+                            auto new_agent_gadget = agent_gadget_builder.Finish();
+
+                            agent_gadgets_vector.emplace_back(new_agent_gadget);
+                        }
+                    }
+                    else
+                    {
+                        if (true)
+                        {
+                            auto insert_it = gadget_strs_.emplace(key, std::wstring());
+                            auto res = GW::Agents::AsyncGetAgentName(agent, insert_it.first->second);
+
+                            current_gadget_strs_decoding.emplace(key);
+                        }
+                        else
+                        {
+                            ChatWriter::WriteIngameDebugChat(
+                              "build_agent_gadgets: Could not decode strings for item.", ChatColor::Blue);
+                        }
+                    }
+                }
+            }
+            agent_gadgets = builder.CreateVector(agent_gadgets_vector);
         }
     }
 
