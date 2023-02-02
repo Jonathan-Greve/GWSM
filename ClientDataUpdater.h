@@ -631,10 +631,20 @@ private:
                         auto npc_agent_living = npc_agent->GetAsAgentLiving();
                         if (npc_agent_living)
                         {
+                            flatbuffers::Offset<flatbuffers::String> name_string;
+
+                            std::wstring name_ws;
+                            auto res = GW::Agents::AsyncGetAgentName(npc_agent, name_ws);
+                            if (res && name_ws.size() > 0)
+                            {
+                                auto name_string = builder.CreateString(wstr_to_str(name_ws.c_str()));
+                            }
+
                             GWIPC::AgentLivingBuilder agent_living_builder(builder);
                             build_agent_living(npc_agent_living, agent_living_builder);
                             agent_living_builder.add_party_slot(
                               get_party_slot_from_agent_id(npc_agent->agent_id));
+                            agent_living_builder.add_name(name_string);
 
                             auto agent_living = agent_living_builder.Finish();
 
