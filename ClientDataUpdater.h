@@ -504,10 +504,20 @@ private:
                         auto player_agent_living = player_agent->GetAsAgentLiving();
                         if (player_agent_living)
                         {
+                            flatbuffers::Offset<flatbuffers::String> name_string;
+
+                            const auto name =
+                              GW::Agents::GetPlayerNameByLoginNumber(player_agent_living->login_number);
+                            if (name)
+                            {
+                                auto name_string = builder.CreateString(wstr_to_str(name));
+                            }
+
                             GWIPC::AgentLivingBuilder agent_living_builder(builder);
                             build_agent_living(player_agent_living, agent_living_builder);
                             agent_living_builder.add_party_slot(
                               get_party_slot_from_agent_id(player_agent->agent_id));
+                            agent_living_builder.add_name(name_string);
 
                             auto agent_living = agent_living_builder.Finish();
 
@@ -525,10 +535,20 @@ private:
                         auto henchman_agent_living = henchman_agent->GetAsAgentLiving();
                         if (henchman_agent_living)
                         {
+                            flatbuffers::Offset<flatbuffers::String> name_string;
+
+                            std::wstring name_ws;
+                            auto res = GW::Agents::AsyncGetAgentName(henchman_agent, name_ws);
+                            if (res && name_ws.size() > 0)
+                            {
+                                auto name_string = builder.CreateString(wstr_to_str(name_ws.c_str()));
+                            }
+
                             GWIPC::AgentLivingBuilder agent_living_builder(builder);
                             build_agent_living(henchman_agent_living, agent_living_builder);
                             agent_living_builder.add_party_slot(
                               get_party_slot_from_agent_id(henchman_agent->agent_id));
+                            agent_living_builder.add_name(name_string);
 
                             auto agent_living = agent_living_builder.Finish();
 
@@ -563,6 +583,10 @@ private:
                             build_agent_living(hero_agent_living, agent_living_builder);
                             agent_living_builder.add_party_slot(
                               get_party_slot_from_agent_id(hero_agent->agent_id));
+
+                            // We don't add the name for heroes to save performance.
+                            // The name is hardcoded to the hero_id. The same hero
+                            // Always have the same hero_id.
 
                             agent_living = agent_living_builder.Finish();
                         }
