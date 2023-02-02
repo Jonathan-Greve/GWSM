@@ -212,6 +212,11 @@ public:
             .count();
         if (buffer_.empty() || items_changed || bag_items_decoding_size > 0 || elapsed_time >= 60)
         {
+            if (items_changed)
+            {
+                item_strs_.clear();
+            }
+
             build_agent_items(builder_, items);
             last_build_agent_items_time_ = std::chrono::system_clock::now();
         }
