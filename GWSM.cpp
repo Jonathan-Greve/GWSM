@@ -152,7 +152,7 @@ void GWSM::Update(GW::HookStatus*)
         }
 
         const auto inventory_or_equipment_changed =
-          gwsm_instance.item_callsbacks_.inventory_or_equipment_changed.exchange(false);
+          gwsm_instance.item_callsbacks_.items_changed.exchange(false);
         const auto quests_changed = gwsm_instance.quest_callsbacks_.quests_changed.exchange(false);
 
         gwsm_instance.client_data_updater_.update(

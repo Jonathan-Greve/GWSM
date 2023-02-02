@@ -13,8 +13,7 @@ public:
     }
 
     void update(const UpdateStatus update_status, const GWIPC::UpdateOptions* update_options,
-                const bool inventory_or_equipment_changed, const bool quests_changed,
-                std::string& nav_mesh_file_path)
+                const bool items_changed, const bool quests_changed, std::string& nav_mesh_file_path)
     {
         const auto quests_decoding_size = current_quest_strs_decoding.size();
         const auto bag_items_decoding_size = current_bag_item_strs_decoding.size();
@@ -111,10 +110,9 @@ public:
         // Check the elapsed time since build_bags was last called
         elapsed_time =
           std::chrono::duration_cast<std::chrono::seconds>(current_time - last_build_bags_time_).count();
-        if (buffer_.empty() || inventory_or_equipment_changed || bag_items_decoding_size > 0 ||
-            elapsed_time >= 60)
+        if (buffer_.empty() || items_changed || bag_items_decoding_size > 0 || elapsed_time >= 60)
         {
-            if (inventory_or_equipment_changed)
+            if (items_changed)
             {
                 bag_item_strs_.clear();
             }
@@ -174,8 +172,7 @@ public:
         elapsed_time =
           std::chrono::duration_cast<std::chrono::seconds>(current_time - last_build_equipped_items_time_)
             .count();
-        if (buffer_.empty() || inventory_or_equipment_changed || bag_items_decoding_size > 0 ||
-            elapsed_time >= 60)
+        if (buffer_.empty() || items_changed || bag_items_decoding_size > 0 || elapsed_time >= 60)
         {
             build_equipped_items(builder_, equipped_items);
             last_build_equipped_items_time_ = std::chrono::system_clock::now();
@@ -209,12 +206,11 @@ public:
             }
         }
 
-        auto agent_items_changed = false;
         flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<GWIPC::AgentItem>>> items;
         elapsed_time =
           std::chrono::duration_cast<std::chrono::seconds>(current_time - last_build_agent_items_time_)
             .count();
-        if (buffer_.empty() || agent_items_changed || bag_items_decoding_size > 0 || elapsed_time >= 60)
+        if (buffer_.empty() || items_changed || bag_items_decoding_size > 0 || elapsed_time >= 60)
         {
             build_agent_items(builder_, items);
             last_build_agent_items_time_ = std::chrono::system_clock::now();

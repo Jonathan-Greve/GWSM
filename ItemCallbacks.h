@@ -111,6 +111,16 @@ public:
           [this](GW::HookStatus* status, GW::Packet::StoC::TransactionDone* packet)
           { return on_transaction_done(status, packet); });
 
+        success = success &&
+          GW::StoC::RegisterPacketCallback(&Items_HookEntry, GAME_CMSG_DROP_ITEM,
+                                           [this](GW::HookStatus* status, void* packet)
+                                           { return on_drop_item(status, packet); });
+
+        success = success &&
+          GW::StoC::RegisterPacketCallback(&Items_HookEntry, GAME_CMSG_DROP_GOLD,
+                                           [this](GW::HookStatus* status, void* packet)
+                                           { return on_drop_gold(status, packet); });
+
         return success;
     }
 
@@ -135,9 +145,11 @@ public:
         GW::StoC::RemoveCallback<GW::Packet::StoC::ItemGeneral_ReuseID>(&Items_HookEntry);
         GW::StoC::RemoveCallback<GW::Packet::StoC::SalvageSessionDone>(&Items_HookEntry);
         GW::StoC::RemoveCallback<GW::Packet::StoC::TransactionDone>(&Items_HookEntry);
+        GW::StoC::RemoveCallback(GAME_CMSG_DROP_ITEM, &Items_HookEntry);
+        GW::StoC::RemoveCallback(GAME_CMSG_DROP_GOLD, &Items_HookEntry);
     }
 
-    std::atomic<bool> inventory_or_equipment_changed = false;
+    std::atomic<bool> items_changed = false;
 
 private:
     GW::HookEntry Items_HookEntry;
@@ -161,4 +173,6 @@ private:
     void on_item_reuse_id(GW::HookStatus* status, GW::Packet::StoC::ItemGeneral_ReuseID* packet);
     void on_item_salvage_session_done(GW::HookStatus* status, GW::Packet::StoC::SalvageSessionDone* packet);
     void on_transaction_done(GW::HookStatus* status, GW::Packet::StoC::TransactionDone* packet);
+    void on_drop_item(GW::HookStatus* status, void* packet);
+    void on_drop_gold(GW::HookStatus* status, void* packet);
 };
