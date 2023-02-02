@@ -236,7 +236,7 @@ public:
                         {
                             auto item = agent_item->item();
                             auto agent = agent_item->agent();
-                            if (item && agent)
+                            if (item && agent && GW::Agents::GetAgentByID(agent->agent_id()))
                             {
                                 auto new_item = create_item_from_values(
                                   builder_, item->description()->str(), item->full_name()->str(),
