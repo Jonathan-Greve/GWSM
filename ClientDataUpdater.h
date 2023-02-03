@@ -34,6 +34,10 @@ public:
         flatbuffers::Offset<GWIPC::Party> party;
         build_party(builder_, party);
 
+        // Create the Enemies object
+        flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<GWIPC::Enemy>>> enemies;
+        build_enemies(builder_, enemies);
+
         auto current_time = std::chrono::system_clock::now();
         auto elapsed_time =
           std::chrono::duration_cast<std::chrono::seconds>(current_time - last_build_quests_time_).count();
@@ -319,9 +323,9 @@ public:
         auto nav_mesh_file_path_fb = builder_.CreateString(nav_mesh_file_path);
 
         // Create the ClientData object
-        auto client_data =
-          GWIPC::CreateClientData(builder_, character, instance, party, update_status.game_state, quests,
-                                  bags, equipped_items, dialogs_info, nav_mesh_file_path_fb, items, gadgets);
+        auto client_data = GWIPC::CreateClientData(
+          builder_, character, instance, party, update_status.game_state, quests, bags, equipped_items,
+          dialogs_info, nav_mesh_file_path_fb, items, gadgets, enemies);
 
         // Finish creating the flatbuffer and retrieve a pointer to the buffer
         builder_.Finish(client_data);
@@ -384,6 +388,10 @@ private:
     // Gadget_id
     std::map<uint32_t, std::wstring> gadget_strs_;
     std::set<uint32_t> current_gadget_strs_decoding;
+
+    // Agent_id
+    std::map<uint32_t, std::wstring> enemy_strs_;
+    std::set<uint32_t> current_enemy_strs_decoding;
 
     std::set<uint32_t> already_called_changequest_ids;
 
@@ -770,6 +778,58 @@ private:
 
                 party = party_builder.Finish();
             }
+        }
+    }
+
+    void build_enemies(flatbuffers::FlatBufferBuilder& builder,
+                       flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<GWIPC::Enemy>>>& enemies)
+    {
+        const auto agents = GW::Agents::GetAgentArray();
+        if (agents && agents->valid())
+        {
+            std::vector<flatbuffers::Offset<GWIPC::Enemy>> enemies_vector;
+            for (const auto agent : *agents)
+            {
+                if (agent && agent->GetIsLivingType())
+                {
+                    auto agent_living = agent->GetAsAgentLiving();
+                    if (agent_living && agent_living->allegiance == GW::Constants::Allegiance::Enemy)
+                    {
+
+                        auto key = agent_living->agent_id;
+                        const auto it = enemy_strs_.find(key);
+                        if (it != enemy_strs_.end())
+                        {
+                            if (it->second != L"")
+                            {
+                                current_enemy_strs_decoding.erase(key);
+
+                                auto name = builder.CreateString(wstr_to_str(it->second.c_str()));
+                                GWIPC::AgentLivingBuilder agent_living_builder(builder);
+                                build_agent_living(agent_living, agent_living_builder);
+                                agent_living_builder.add_name(name);
+                                auto new_agent_living = agent_living_builder.Finish();
+
+                                auto enemy_builder = GWIPC::EnemyBuilder(builder);
+                                enemy_builder.add_agent_living(new_agent_living);
+                                auto new_enemy = enemy_builder.Finish();
+
+                                enemies_vector.emplace_back(new_enemy);
+                            }
+                        }
+                        else
+                        {
+
+                            auto insert_it = enemy_strs_.emplace(key, std::wstring());
+                            auto res = GW::Agents::AsyncGetAgentName(agent, insert_it.first->second);
+
+                            current_enemy_strs_decoding.emplace(key);
+                        }
+                    }
+                }
+            }
+
+            enemies = builder.CreateVector(enemies_vector);
         }
     }
 
