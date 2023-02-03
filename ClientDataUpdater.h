@@ -211,6 +211,51 @@ public:
             }
         }
 
+        flatbuffers::Offset<GWIPC::Bag> unclaimed_items;
+        elapsed_time =
+          std::chrono::duration_cast<std::chrono::seconds>(current_time - last_build_unclaimed_items_time_)
+            .count();
+        if (buffer_.empty() || items_changed || bag_items_decoding_size > 0 || elapsed_time >= 60)
+        {
+            build_unclaimed_items(builder_, unclaimed_items);
+            last_build_unclaimed_items_time_ = std::chrono::system_clock::now();
+        }
+        else
+        {
+            const auto client_data = GWIPC::GetClientData(buffer_.data());
+            if (client_data)
+            {
+                const auto cached_unclaimed_items = client_data->unclaimed_items();
+                if (cached_unclaimed_items && cached_unclaimed_items->items())
+                {
+                    std::vector<flatbuffers::Offset<GWIPC::Item>> cached_unclaimed_items_vector;
+                    for (uint32_t j = 0; j < cached_unclaimed_items->items()->size(); j++)
+                    {
+                        auto item = cached_unclaimed_items->items()->Get(j);
+                        if (item)
+                        {
+
+                            auto new_item = create_item_from_values(
+                              builder_, item->description()->str(), item->full_name()->str(),
+                              item->single_item_name()->str(), item->name()->str(), item->interaction(),
+                              item->is_weapon_set_item(), item->item_id(), item->item_modifier(),
+                              item->model_id(), item->quantity(), item->type(), item->value(), item->index());
+
+                            cached_unclaimed_items_vector.emplace_back(new_item);
+                        }
+                    }
+
+                    auto cached_items = builder_.CreateVector(cached_unclaimed_items_vector);
+
+                    auto bag_builder = GWIPC::BagBuilder(builder_);
+                    bag_builder.add_items(cached_items);
+                    bag_builder.add_bag_size(cached_unclaimed_items->bag_size());
+
+                    unclaimed_items = bag_builder.Finish();
+                }
+            }
+        }
+
         flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<GWIPC::AgentItem>>> items;
         elapsed_time =
           std::chrono::duration_cast<std::chrono::seconds>(current_time - last_build_agent_items_time_)
@@ -325,7 +370,7 @@ public:
         // Create the ClientData object
         auto client_data = GWIPC::CreateClientData(
           builder_, character, instance, party, update_status.game_state, quests, bags, equipped_items,
-          dialogs_info, nav_mesh_file_path_fb, items, gadgets, enemies);
+          dialogs_info, nav_mesh_file_path_fb, items, gadgets, enemies, unclaimed_items);
 
         // Finish creating the flatbuffer and retrieve a pointer to the buffer
         builder_.Finish(client_data);
@@ -354,6 +399,7 @@ private:
     std::chrono::time_point<std::chrono::system_clock> last_build_equipped_items_time_;
     std::chrono::time_point<std::chrono::system_clock> last_build_agent_items_time_;
     std::chrono::time_point<std::chrono::system_clock> last_build_agent_gadgets_time_;
+    std::chrono::time_point<std::chrono::system_clock> last_build_unclaimed_items_time_;
 
     struct QuestStrings
     {
@@ -1024,6 +1070,27 @@ private:
             const auto bag_size = create_bag_item(builder, bag_array, equipment_bag_index, bag_items_vector);
 
             bag_items = builder.CreateVector(bag_items_vector);
+        }
+    }
+
+    void build_unclaimed_items(flatbuffers::FlatBufferBuilder& builder,
+                               flatbuffers::Offset<GWIPC::Bag>& unclaimed_items)
+    {
+        const auto bag_array = GW::Items::GetBagArray();
+        if (bag_array)
+        {
+            constexpr uint32_t unclaimed_bag_index = 7;
+            std::vector<flatbuffers::Offset<GWIPC::Item>> unclaimed_items_vector;
+            const auto bag_size =
+              create_bag_item(builder, bag_array, unclaimed_bag_index, unclaimed_items_vector);
+
+            auto new_items = builder.CreateVector(unclaimed_items_vector);
+
+            auto bag_builder = GWIPC::BagBuilder(builder_);
+            bag_builder.add_items(new_items);
+            bag_builder.add_bag_size(bag_size);
+
+            unclaimed_items = bag_builder.Finish();
         }
     }
 
