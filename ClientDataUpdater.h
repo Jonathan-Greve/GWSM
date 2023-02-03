@@ -111,6 +111,7 @@ public:
         // Sets the 5 bags (regular bags 1-4 + equipment bag).
         // Tries to use the previous flatbuffer as a cache for the bag items.
         // This is because it is very slow to rebuild from scratch.
+        const std::vector<uint32_t> bag_indices = {1, 2, 3, 4, 5};
         flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<GWIPC::Bag>>> bags;
         // Check the elapsed time since build_bags was last called
         elapsed_time =
@@ -122,7 +123,7 @@ public:
                 bag_item_strs_.clear();
             }
 
-            build_bags(builder_, bags);
+            build_bags(builder_, bag_indices, bags);
             last_build_bags_time_ = std::chrono::system_clock::now();
         }
         else
@@ -258,12 +259,12 @@ public:
 
         flatbuffers::Offset<GWIPC::Bag> material_storage;
         elapsed_time =
-          std::chrono::duration_cast<std::chrono::seconds>(current_time - last_build_material_storage)
+          std::chrono::duration_cast<std::chrono::seconds>(current_time - last_build_material_storage_time)
             .count();
         if (buffer_.empty() || items_changed || bag_items_decoding_size > 0 || elapsed_time >= 60)
         {
             build_material_storage(builder_, material_storage);
-            last_build_material_storage = std::chrono::system_clock::now();
+            last_build_material_storage_time = std::chrono::system_clock::now();
         }
         else
         {
@@ -297,6 +298,69 @@ public:
                     bag_builder.add_bag_size(cached_material_storage->bag_size());
 
                     material_storage = bag_builder.Finish();
+                }
+            }
+        }
+
+        const std::vector<uint32_t> storage_bag_indices = {8,  9,  10, 11, 12, 13, 14,
+                                                           15, 16, 17, 18, 19, 20, 21};
+        flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<GWIPC::Bag>>> storage;
+        elapsed_time =
+          std::chrono::duration_cast<std::chrono::seconds>(current_time - last_build_storage_time).count();
+        if (buffer_.empty() || items_changed || bag_items_decoding_size > 0 || elapsed_time >= 60)
+        {
+            if (items_changed)
+            {
+                bag_item_strs_.clear();
+            }
+
+            build_bags(builder_, storage_bag_indices, storage);
+            last_build_storage_time = std::chrono::system_clock::now();
+        }
+        else
+        {
+            const auto client_data = GWIPC::GetClientData(buffer_.data());
+            if (client_data)
+            {
+                const auto cached_storage = client_data->storage();
+                if (cached_storage)
+                {
+                    for (uint32_t i = 0; i < cached_storage->size(); i++)
+                    {
+                        std::vector<flatbuffers::Offset<GWIPC::Bag>> storage_bags_vector;
+                        const GWIPC::Bag* bag = cached_storage->Get(i);
+                        if (bag)
+                        {
+                            auto items = bag->items();
+                            if (items)
+                            {
+                                std::vector<flatbuffers::Offset<GWIPC::Item>> bag_items_vector;
+                                for (uint32_t j = 0; j < items->size(); j++)
+                                {
+                                    auto item = items->Get(j);
+                                    if (item)
+                                    {
+                                        auto new_bag_item = create_item_from_values(
+                                          builder_, item->description()->str(), item->full_name()->str(),
+                                          item->single_item_name()->str(), item->name()->str(),
+                                          item->interaction(), item->is_weapon_set_item(), item->item_id(),
+                                          item->item_modifier(), item->model_id(), item->quantity(),
+                                          item->type(), item->value(), item->index());
+
+                                        bag_items_vector.emplace_back(new_bag_item);
+                                    }
+                                }
+                                auto bag_items = builder_.CreateVector(bag_items_vector);
+                                GWIPC::BagBuilder bag_builder(builder_);
+                                bag_builder.add_items(bag_items);
+                                bag_builder.add_bag_size(static_cast<uint8_t>(bag->bag_size()));
+
+                                auto new_bag = bag_builder.Finish();
+                                storage_bags_vector.emplace_back(new_bag);
+                            }
+                        }
+                        storage = builder_.CreateVector(storage_bags_vector);
+                    }
                 }
             }
         }
@@ -413,9 +477,10 @@ public:
         auto nav_mesh_file_path_fb = builder_.CreateString(nav_mesh_file_path);
 
         // Create the ClientData object
-        auto client_data = GWIPC::CreateClientData(
-          builder_, character, instance, party, update_status.game_state, quests, bags, equipped_items,
-          dialogs_info, nav_mesh_file_path_fb, items, gadgets, enemies, unclaimed_items, material_storage);
+        auto client_data =
+          GWIPC::CreateClientData(builder_, character, instance, party, update_status.game_state, quests,
+                                  bags, equipped_items, dialogs_info, nav_mesh_file_path_fb, items, gadgets,
+                                  enemies, unclaimed_items, material_storage, storage);
 
         // Finish creating the flatbuffer and retrieve a pointer to the buffer
         builder_.Finish(client_data);
@@ -445,7 +510,8 @@ private:
     std::chrono::time_point<std::chrono::system_clock> last_build_agent_items_time_;
     std::chrono::time_point<std::chrono::system_clock> last_build_agent_gadgets_time_;
     std::chrono::time_point<std::chrono::system_clock> last_build_unclaimed_items_time_;
-    std::chrono::time_point<std::chrono::system_clock> last_build_material_storage;
+    std::chrono::time_point<std::chrono::system_clock> last_build_material_storage_time;
+    std::chrono::time_point<std::chrono::system_clock> last_build_storage_time;
 
     struct QuestStrings
     {
@@ -1080,7 +1146,7 @@ private:
         return bag_size;
     }
 
-    void build_bags(flatbuffers::FlatBufferBuilder& builder,
+    void build_bags(flatbuffers::FlatBufferBuilder& builder, const std::vector<uint32_t>& bag_indices,
                     flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<GWIPC::Bag>>>& bags)
     {
         const auto bag_array = GW::Items::GetBagArray();
@@ -1088,7 +1154,7 @@ private:
         {
             std::vector<flatbuffers::Offset<GWIPC::Bag>> bags_vector;
             std::vector<flatbuffers::Offset<GWIPC::Item>> bag_items_vector;
-            for (uint32_t bag_index = 1; bag_index <= 5; bag_index++)
+            for (const auto bag_index : bag_indices)
             {
                 const auto bag_size = create_bag_item(builder, bag_array, bag_index, bag_items_vector);
 
