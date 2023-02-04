@@ -43,6 +43,8 @@ public:
     bool GW_is_closing = false;
     bool has_freed_resources = false;
 
+    std::string player_email_;
+
     ClientDataUpdater client_data_updater_;
 
     ItemCallbacks item_callsbacks_;
@@ -54,8 +56,6 @@ private:
         , connection_manager_(player_email_)
         , client_data_updater_(player_email_)
         , update_options_manager_(player_email_){};
-
-    std::string player_email_;
 
     GWIPC::ConnectionManager connection_manager_;
     GWIPC::UpdateOptionsManager update_options_manager_;
