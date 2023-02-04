@@ -5,6 +5,7 @@
 class ClientDataUpdater
 {
 public:
+    ClientDataUpdater() = delete;
     ClientDataUpdater(std::string email)
         : shared_memory_(email, GWIPC::CLIENTDATA_SIZE)
         , builder_(GWIPC::CLIENTDATA_SIZE)
