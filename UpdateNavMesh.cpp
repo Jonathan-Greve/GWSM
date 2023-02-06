@@ -177,10 +177,13 @@ void make_nav_mesh(flatbuffers::FlatBufferBuilder& builder_, flatbuffers::Offset
         }
     }
 
+    GWIPC::NavMeshDimensions nav_mesh_dimensions(min_x, min_y, min_z, max_x, max_y, max_z);
+
     auto trapezoids = builder_.CreateVector(nav_mesh_trapezoids_vector);
 
     auto nav_mesh_builder = GWIPC::NavMeshBuilder(builder_);
     nav_mesh_builder.add_trapezoids(trapezoids);
+    nav_mesh_builder.add_dimensions(&nav_mesh_dimensions);
 
     nav_mesh = nav_mesh_builder.Finish();
 }
