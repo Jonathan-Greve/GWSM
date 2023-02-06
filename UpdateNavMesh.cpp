@@ -54,6 +54,7 @@ const std::string& update_nav_mesh()
                             {
                                 navmesh_ofstream.write(reinterpret_cast<const char*>(buffer.data()),
                                                        buffer.size());
+                                navmesh_ofstream.close();
                             }
 
                             ReleaseMutex(mutex);
