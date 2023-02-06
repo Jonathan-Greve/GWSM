@@ -270,7 +270,7 @@ namespace {
         if (Verify(address))
             WorldMapState_Addr = *(uintptr_t*)address;
 
-        DoAction_Func = (DoAction_pt)Scanner::Find("\x8B\x75\x08\x57\x8B\xF9\x83\xFE\x09\x75", "xxxxxxxxxx", -0x4);
+        DoAction_Func = (DoAction_pt)Scanner::Find("\x83\xfe\x0b\x75\x14\x68\x77\x01\x00\x00", "xxxxxxxxxx", -0x1b);
 
         SendUIMessage_Func = (SendUIMessage_pt)Scanner::Find(
             "\xE8\x00\x00\x00\x00\x5D\xC3\x89\x45\x08\x5D\xE9", "x????xxxxxxx", -0x1A);
@@ -545,6 +545,8 @@ namespace GW {
         bool RawSendUIMessage(UIMessage msgid, void* wParam, void* lParam) {
             if (!RetSendUIMessage)
                 return false;
+            if (((uint32_t)msgid & 0x30000000) == 0x30000000)
+                return true; // Internal GWCA UI Message, used for hooks
             HookBase::EnterHook();
             RetSendUIMessage(msgid, wParam, lParam);
             HookBase::LeaveHook();
@@ -779,6 +781,11 @@ namespace GW {
         {
             if (!(SetEnumPreference_Func && PrefsInitialised() && GetEnumPreference_Func && pref < EnumPreference::Count))
                 return false;
+            if (!GameThread::IsInGameThread()) {
+                // NB: Setting preferences triggers UI message 0x10000013f - make sure its run on the game thread!
+                GameThread::Enqueue([pref, value]() { SetPreference(pref, value);});
+                return true;
+            }
             uint32_t* opts = 0;
             uint32_t opts_count = GetPreferenceOptions(pref, &opts);
             size_t i = 0;
@@ -842,6 +849,11 @@ namespace GW {
         {
             if (!PrefsInitialised())
                 return false;
+            if (!GameThread::IsInGameThread()) {
+                // NB: Setting preferences triggers UI message 0x10000013f - make sure its run on the game thread!
+                GameThread::Enqueue([pref, value]() { SetPreference(pref, value);});
+                return true;
+            }
             value = ClampPreference(pref, value); // Clamp here to avoid assertion error later.
             bool ok = SetNumberPreference_Func && pref < NumberPreference::Count ? SetNumberPreference_Func((uint32_t)pref, value), true : false;
             if (!ok)
@@ -889,11 +901,27 @@ namespace GW {
         }
         bool SetPreference(StringPreference pref, wchar_t* value)
         {
-            return SetStringPreference_Func && PrefsInitialised() && pref < StringPreference::Count ? SetStringPreference_Func((uint32_t)pref, value), true : false;
+            if (!(SetStringPreference_Func && PrefsInitialised() && pref < StringPreference::Count))
+                return false;
+            if (!GameThread::IsInGameThread()) {
+                // NB: Setting preferences triggers UI message 0x10000013f - make sure its run on the game thread!
+                GameThread::Enqueue([pref, value]() { SetPreference(pref, value);});
+                return true;
+            }
+            SetStringPreference_Func((uint32_t)pref, value);
+            return true;
         }
         bool SetPreference(FlagPreference pref, bool value)
         {
-            return SetFlagPreference_Func && PrefsInitialised() && pref < FlagPreference::Count ? SetFlagPreference_Func((uint32_t)pref, value), true : false;
+            if (!(SetFlagPreference_Func && PrefsInitialised() && pref < FlagPreference::Count))
+                return false;
+            if (!GameThread::IsInGameThread()) {
+                // NB: Setting preferences triggers UI message 0x10000013f - make sure its run on the game thread!
+                GameThread::Enqueue([pref, value]() { SetPreference(pref, value);});
+                return true;
+            }
+            SetFlagPreference_Func((uint32_t)pref, value);
+            return true;
         }
         uint32_t GetFrameLimit() {
             uint32_t frame_limit = CommandLineNumber_Buffer ? CommandLineNumber_Buffer[(uint32_t)NumberCommandLineParameter::FPS] : 0;
