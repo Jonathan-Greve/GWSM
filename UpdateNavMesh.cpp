@@ -160,8 +160,17 @@ void make_nav_mesh(flatbuffers::FlatBufferBuilder& builder_, flatbuffers::Offset
             if (trapezoid.adjacent[3])
                 up_id = trapezoid.adjacent[3]->id;
 
+            GWIPC::AdjacentTrapezoidIds adjacent_trapezoid_ids{left_id, right_id, down_id, up_id};
+
             auto trapezoid_builder = GWIPC::NavMeshTrapezoidBuilder(builder_);
             trapezoid_builder.add_id(trapezoid.id);
+            trapezoid_builder.add_adjacent_trapezoid_ids(&adjacent_trapezoid_ids);
+            trapezoid_builder.add_bottom_left(&BL);
+            trapezoid_builder.add_bottom_right(&BR);
+            trapezoid_builder.add_top_left(&TL);
+            trapezoid_builder.add_top_right(&TR);
+            trapezoid_builder.add_z_plane(pmap.zplane);
+
             auto new_trapezoid = trapezoid_builder.Finish();
 
             nav_mesh_trapezoids_vector.push_back(new_trapezoid);
