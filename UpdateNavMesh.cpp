@@ -128,24 +128,35 @@ void make_nav_mesh(flatbuffers::FlatBufferBuilder& builder_, flatbuffers::Offset
             GWIPC::Vec3 TR{trapezoid.XTR, -altitude, trapezoid.YT};
 
             std::vector<GWIPC::Vec3> trapezoid_vertices = {BL, BR, TL, TR};
-            min_x = min_element(trapezoid_vertices.begin(), trapezoid_vertices.end(),
-                                [](const GWIPC::Vec3& a, const GWIPC::Vec3& b) { return a.x() < b.x(); })
-                      ->x();
-            max_x = max_element(trapezoid_vertices.begin(), trapezoid_vertices.end(),
-                                [](const GWIPC::Vec3& a, const GWIPC::Vec3& b) { return a.x() < b.x(); })
-                      ->x();
-            min_y = min_element(trapezoid_vertices.begin(), trapezoid_vertices.end(),
-                                [](const GWIPC::Vec3& a, const GWIPC::Vec3& b) { return a.y() < b.y(); })
-                      ->y();
-            max_y = max_element(trapezoid_vertices.begin(), trapezoid_vertices.end(),
-                                [](const GWIPC::Vec3& a, const GWIPC::Vec3& b) { return a.y() < b.y(); })
-                      ->y();
-            min_z = min_element(trapezoid_vertices.begin(), trapezoid_vertices.end(),
-                                [](const GWIPC::Vec3& a, const GWIPC::Vec3& b) { return a.z() < b.z(); })
-                      ->z();
-            max_z = max_element(trapezoid_vertices.begin(), trapezoid_vertices.end(),
-                                [](const GWIPC::Vec3& a, const GWIPC::Vec3& b) { return a.z() < b.z(); })
-                      ->z();
+            min_x = std::min(min_x, BL.x());
+            min_x = std::min(min_x, BR.x());
+            min_x = std::min(min_x, TL.x());
+            min_x = std::min(min_x, TR.x());
+
+            max_x = std::max(max_x, BL.x());
+            max_x = std::max(max_x, BR.x());
+            max_x = std::max(max_x, TL.x());
+            max_x = std::max(max_x, TR.x());
+
+            min_y = std::min(min_y, BL.y());
+            min_y = std::min(min_y, BR.y());
+            min_y = std::min(min_y, TL.y());
+            min_y = std::min(min_y, TR.y());
+
+            max_y = std::max(max_y, BL.y());
+            max_y = std::max(max_y, BR.y());
+            max_y = std::max(max_y, TL.y());
+            max_y = std::max(max_y, TR.y());
+
+            min_z = std::min(min_z, BL.z());
+            min_z = std::min(min_z, BR.z());
+            min_z = std::min(min_z, TL.z());
+            min_z = std::min(min_z, TR.z());
+
+            max_z = std::max(max_z, BL.z());
+            max_z = std::max(max_z, BR.z());
+            max_z = std::max(max_z, TL.z());
+            max_z = std::max(max_z, TR.z());
 
             int32_t left_id = -1;
             int32_t right_id = -1;

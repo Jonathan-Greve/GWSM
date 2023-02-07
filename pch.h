@@ -26,6 +26,7 @@
 #include <iostream>
 #include <fstream>
 #include <regex>
+#include <algorithm>
 
 // Other stuff
 
