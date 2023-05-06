@@ -117,25 +117,6 @@ namespace GW {
             return GetTitleTrack(GetActiveTitleId());
         }
 
-        Quest* GetActiveQuest() {
-            GW::Constants::QuestID quest_id = GetActiveQuestId();
-            auto* log = quest_id != (GW::Constants::QuestID)0 ? GetQuestLog() : nullptr;
-            if (!log) return nullptr;
-            for (auto& quest : *log) {
-                if (quest.quest_id == quest_id)
-                    return &quest;
-            }
-            return nullptr;
-        }
-        QuestLog* GetQuestLog() {
-            auto* w = GetWorldContext();
-            return w && w->quest_log.valid() ? &w->quest_log : nullptr;
-        }
-        GW::Constants::QuestID GetActiveQuestId() {
-            auto* w = GetWorldContext();
-            return w ? w->active_quest_id : (GW::Constants::QuestID)0;
-        }
-
         uint32_t GetAmountOfPlayersInInstance() {
             return Agents::GetAmountOfPlayersInInstance();
         }
