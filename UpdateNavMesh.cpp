@@ -180,7 +180,7 @@ void make_nav_mesh(flatbuffers::FlatBufferBuilder& builder_, flatbuffers::Offset
             trapezoid_builder.add_bottom_right(&BR);
             trapezoid_builder.add_top_left(&TL);
             trapezoid_builder.add_top_right(&TR);
-            trapezoid_builder.add_z_plane(pmap.zplane);
+            trapezoid_builder.add_z_plane(i);
 
             auto new_trapezoid = trapezoid_builder.Finish();
 

@@ -63,6 +63,7 @@
 #include "GameEntities/Item.h"
 #include "GameEntities/Guild.h"
 #include "GameEntities/Pathing.h"
+#include "GameEntities/Map.h"
 
 #include "Managers/GameThreadMgr.h"
 #include "Managers/MemoryMgr.h"
