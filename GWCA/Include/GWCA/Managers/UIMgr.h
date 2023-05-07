@@ -125,6 +125,7 @@ namespace GW {
             kShowXunlaiChest            = 0x10000000 | 0x40,
             kMinionCountUpdated         = 0x10000000 | 0x46,
             kMoraleChange               = 0x10000000 | 0x47, // wparam = {agent id, morale percent }
+            kLoginStateChanged          = 0x10000000 | 0x50, // wparam = {bool is_logged_in, bool unk }
             kEffectAdd                  = 0x10000000 | 0x55, // wparam = {agent_id, GW::Effect*}
             kEffectRenew                = 0x10000000 | 0x56, // wparam = GW::Effect*
             kEffectRemove               = 0x10000000 | 0x57, // wparam = effect id
@@ -156,19 +157,22 @@ namespace GW {
             kPvPWindowContent           = 0x10000000 | 0xF8,
             kItemUpdated                = 0x10000000 | 0x104, // wparam = *ItemGeneral packet
             kMapChange                  = 0x10000000 | 0x10F, // wparam = map id
+            kErrorMessage               = 0x10000000 | 0x117, // wparam = { int error_index, wchar_t* error_encoded_string }
             kEnumPreference             = 0x10000000 | 0x13E, // wparam = { EnumPreference pref_id, uint32_t val }
             kCheckboxPreference         = 0x10000000 | 0x13F,
             kPreferenceChanged          = 0x10000000 | 0x140,
             kUIPositionChanged          = 0x10000000 | 0x141,
             kQuestAdded                 = 0x10000000 | 0x149, // wparam = { quest_id, ... }
             kQuestDetailsChanged        = 0x10000000 | 0x14A, // wparam = { quest_id, ... }
-            kCurrentQuestChanged        = 0x10000000 | 0x14C, // wparam = { quest_id, ... }
+            kClientActiveQuestChanged   = 0x10000000 | 0x14C, // wparam = { quest_id, ... }. Triggered when the game requests the current quest to change
+            kServerActiveQuestChanged   = 0x10000000 | 0x14E, // wparam = { quest_id, ... }. Triggered when the server requests the current quest to change
             kObjectiveComplete          = 0x10000000 | 0x156, // wparam = { objective_id, ... }
             kCheckUIState               = 0x10000000 | 0x170, // Undocumented
             kGuildHall                  = 0x10000000 | 0x177, // wparam = gh key (uint32_t[4])
             kLeaveGuildHall             = 0x10000000 | 0x179,
             kTravel                     = 0x10000000 | 0x17A,
             kOpenWikiUrl                = 0x10000000 | 0x17B, // wparam = char* url
+            kAppendMessageToChat        = 0x10000000 | 0x189, // wparam = wchar_t* message
             kHideHeroPanel              = 0x10000000 | 0x197, // wparam = hero_id
             kShowHeroPanel              = 0x10000000 | 0x198, // wparam = hero_id
             kMoveItem                   = 0x10000000 | 0x19e, // wparam = { item_id, to_bag, to_slot, bool prompt }
@@ -184,6 +188,8 @@ namespace GW {
             kSendMerchantRequestQuote   = 0x30000000 | 0x6,  // wparam = { Merchant::TransactionType type,uint32_t gold_give,Merchant::TransactionInfo give,uint32_t gold_recv,Merchant::TransactionInfo recv }
             kSendMerchantTransactItem   = 0x30000000 | 0x7,  // wparam = { Merchant::TransactionType type, uint32_t unknown, Merchant::QuoteInfo give, Merchant::QuoteInfo recv }
             kSendUseItem                = 0x30000000 | 0x8,  // wparam = uint32_t item_id
+            kSendSetActiveQuest         = 0x30000000 | 0x9,  // wparam = uint32_t quest_id
+            kSendAbandonQuest           = 0x30000000 | 0x10,  // wparam = uint32_t quest_id
         };
 
         enum class NumberCommandLineParameter : uint32_t {
@@ -210,9 +216,11 @@ namespace GW {
             LastCharacterName,
             Count = 0x3
         };
+
         enum class NumberPreference : uint32_t {
             // number preferences
-            ChatState = 0x1, // 1 == showing chat window, 0 = not showing chat window
+            AutoTournPartySort,
+            ChatState, // 1 == showing chat window, 0 = not showing chat window
             ChatTab,
             DistrictLastVisitedLanguage,
             DistrictLastVisitedLanguage2,
@@ -224,22 +232,28 @@ namespace GW {
             TextLanguage,
             AudioLanguage,
             ChatFilterLevel,
-            SkillListSortMethod = 0x11,
+            RefreshRate,
+            ScreenSizeX,
+            ScreenSizeY,
+            SkillListFilterRarity,
+            SkillListSortMethod,
             SkillListViewMode,
             SoundQuality, // 0 to 100
             StorageBagPage,
-            TextureQuality = 0x16, // TextureLod
+            Territory,
+            TextureQuality, // TextureLod
             UseBestTextureFiltering,
             EffectsVolume, // 0 to 100
             DialogVolume, // 0 to 100
             BackgroundVolume, // 0 to 100
             MusicVolume, // 0 to 100
             UIVolume, // 0 to 100
-            WindowPosX = 0x1E,
+            Vote,
+            WindowPosX,
             WindowPosY,
             WindowSizeX,
             WindowSizeY,
-            SealedSeed = 0x22, // Used in codex arena
+            SealedSeed, // Used in codex arena
             SealedCount, // Used in codex arena
             FieldOfView, // 0 to 100
             CameraRotationSpeed, // 0 to 100
@@ -257,9 +271,15 @@ namespace GW {
             ChannelGroup,
             ChannelTrade,
             ShowTextInSkillFloaters = 0x11,
-            InvertMouseControlOfCamera = 0x16,
+            ShowKRGBRatingsInGame,
+            AutoHideUIOnLoginScreen = 0x14,
+            DoubleClickToInteract,
+            InvertMouseControlOfCamera,
             DisableMouseWalking,
+            AutoCameraInObserveMode,
+            AutoHideUIInObserveMode,
             RememberAccountName = 0x2D,
+            IsWindowed,
             ShowSpendAttributesButton = 0x31, // The game uses this hacky method of showing the "spend attributes" button next to the exp bar.
             ConciseSkillDescriptions,
             DoNotShowSkillTipsOnEffectMonitor,
@@ -270,6 +290,7 @@ namespace GW {
             AlwaysShowNearbyNamesPvP,
             FadeDistantNameTags,
             DoNotCloseWindowsOnEscape = 0x45,
+            ShowMinimapOnWorldMap,
             WaitForVSync = 0x54,
             WhispersFromFriendsEtcOnly,
             ShowChatTimestamps,

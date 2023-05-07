@@ -39,6 +39,7 @@
 
 // GWCA includes
 #include "Constants/Maps.h"
+#include "Constants/QuestIDs.h"
 #include "Constants/Constants.h"
 
 #include "Context/CharContext.h"
@@ -79,6 +80,7 @@
 #include "Managers/ItemMgr.h"
 #include "Managers/PlayerMgr.h"
 #include "Managers/CtoSMgr.h"
+#include "Managers/QuestMgr.h"
 
 #include "Utilities/Hook.h"
 #include "Utilities/Hooker.h"

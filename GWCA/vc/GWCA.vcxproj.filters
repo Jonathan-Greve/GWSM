@@ -315,5 +315,8 @@
     <ClCompile Include="..\Source\EventMgr.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="..\Source\QuestMgr.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

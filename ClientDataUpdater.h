@@ -71,7 +71,7 @@ public:
             }
             else
             {
-                auto active_quest_id = static_cast<uint32_t>(GW::PlayerMgr::GetActiveQuestId());
+                auto active_quest_id = static_cast<uint32_t>(GW::QuestMgr::GetActiveQuestId());
 
                 const auto client_data = GWIPC::GetClientData(buffer_.data());
                 if (client_data)
@@ -1027,8 +1027,9 @@ private:
                               builder, wstr_to_str(it->second.description.c_str()),
                               wstr_to_str(it->second.location.c_str()), wstr_to_str(it->second.name.c_str()),
                               wstr_to_str(it->second.npc_name.c_str()),
-                              wstr_to_str(it->second.objectives.c_str()), quest.log_state, quest.map_from,
-                              (uint32_t)quest.map_to, marker, (uint32_t)quest.quest_id);
+                              wstr_to_str(it->second.objectives.c_str()), quest.log_state,
+                              static_cast<int32_t>(quest.map_from), static_cast<int32_t>(quest.map_to),
+                              marker, (uint32_t)quest.quest_id);
 
                             quests_vector.emplace_back(new_quest);
                         }
@@ -1060,7 +1061,7 @@ private:
                         {
                             if (! already_called_changequest_ids.contains(key))
                             {
-                                auto active_quest_id = (uint32_t)GW::PlayerMgr::GetActiveQuestId();
+                                auto active_quest_id = (uint32_t)GW::QuestMgr::GetActiveQuestId();
                                 if (active_quest_id != key)
                                 {
                                     GW::UI::ChangeQuest(key);

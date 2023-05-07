@@ -101,6 +101,7 @@
     <ClCompile Include="..\Source\MerchantMgr.cpp" />
     <ClCompile Include="..\Source\PartyMgr.cpp" />
     <ClCompile Include="..\Source\PlayerMgr.cpp" />
+    <ClCompile Include="..\Source\QuestMgr.cpp" />
     <ClCompile Include="..\Source\RenderMgr.cpp" />
     <ClCompile Include="..\Source\Scanner.cpp" />
     <ClCompile Include="..\Source\Skill.cpp" />
