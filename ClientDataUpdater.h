@@ -1003,84 +1003,78 @@ private:
     void build_quests(flatbuffers::FlatBufferBuilder& builder,
                       flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<GWIPC::Quest>>>& quests)
     {
-        const auto world_context = GW::GetWorldContext();
-        if (world_context)
+        const auto quest_log = GW::QuestMgr::GetQuestLog();
+        if (quest_log)
         {
-            const auto& quest_log = world_context->quest_log;
-            if (quest_log.valid())
+            std::vector<flatbuffers::Offset<GWIPC::Quest>> quests_vector;
+            for (auto& quest : *quest_log)
             {
-                std::vector<flatbuffers::Offset<GWIPC::Quest>> quests_vector;
-                for (const auto& quest : quest_log)
+                auto key = (uint32_t)quest.quest_id;
+                const auto it = quest_strs_.find(key);
+                if (it != quest_strs_.end())
                 {
-                    auto key = (uint32_t)quest.quest_id;
-                    const auto it = quest_strs_.find(key);
-                    if (it != quest_strs_.end())
+                    if (it->second.location != L"" && it->second.name != L"" &&
+                        it->second.description != L"" && it->second.npc_name != L"")
                     {
-                        if (it->second.location != L"" && it->second.name != L"" &&
-                            it->second.description != L"" && it->second.npc_name != L"")
+                        current_quest_strs_decoding.erase(key);
+
+                        GWIPC::Vec3 marker(quest.marker.x, -quest.marker.z, quest.marker.y);
+
+                        auto new_quest = create_quest_from_values(
+                          builder, wstr_to_str(it->second.description.c_str()),
+                          wstr_to_str(it->second.location.c_str()), wstr_to_str(it->second.name.c_str()),
+                          wstr_to_str(it->second.npc_name.c_str()),
+                          wstr_to_str(it->second.objectives.c_str()), quest.log_state,
+                          static_cast<int32_t>(quest.map_from), static_cast<int32_t>(quest.map_to), marker,
+                          (uint32_t)quest.quest_id);
+
+                        quests_vector.emplace_back(new_quest);
+                    }
+                }
+                else
+                {
+
+                    if (quest.location && quest.name && quest.npc && quest.description && quest.objectives)
+                    {
+                        auto insert_it = quest_strs_.emplace(key, QuestStrings());
+                        if (quest.description)
                         {
-                            current_quest_strs_decoding.erase(key);
-
-                            GWIPC::Vec3 marker(quest.marker.x, -quest.marker.z, quest.marker.y);
-
-                            auto new_quest = create_quest_from_values(
-                              builder, wstr_to_str(it->second.description.c_str()),
-                              wstr_to_str(it->second.location.c_str()), wstr_to_str(it->second.name.c_str()),
-                              wstr_to_str(it->second.npc_name.c_str()),
-                              wstr_to_str(it->second.objectives.c_str()), quest.log_state,
-                              static_cast<int32_t>(quest.map_from), static_cast<int32_t>(quest.map_to),
-                              marker, (uint32_t)quest.quest_id);
-
-                            quests_vector.emplace_back(new_quest);
+                            GW::UI::AsyncDecodeStr(quest.description, &(*insert_it.first).second.description);
                         }
+                        GW::UI::AsyncDecodeStr(quest.location, &(*insert_it.first).second.location);
+                        GW::UI::AsyncDecodeStr(quest.name, &(*insert_it.first).second.name);
+                        GW::UI::AsyncDecodeStr(quest.npc, &(*insert_it.first).second.npc_name);
+                        if (quest.objectives && *quest.objectives != 0)
+                        {
+                            GW::UI::AsyncDecodeStr(quest.objectives, &(*insert_it.first).second.objectives);
+                        }
+
+                        current_quest_strs_decoding.emplace(key);
                     }
                     else
                     {
-
-                        if (quest.location && quest.name && quest.npc && quest.description &&
-                            quest.objectives)
+                        if (! already_called_changequest_ids.contains(key))
                         {
-                            auto insert_it = quest_strs_.emplace(key, QuestStrings());
-                            if (quest.description)
+                            auto active_quest_id = (uint32_t)GW::QuestMgr::GetActiveQuestId();
+                            if (active_quest_id != key)
                             {
-                                GW::UI::AsyncDecodeStr(quest.description,
-                                                       &(*insert_it.first).second.description);
-                            }
-                            GW::UI::AsyncDecodeStr(quest.location, &(*insert_it.first).second.location);
-                            GW::UI::AsyncDecodeStr(quest.name, &(*insert_it.first).second.name);
-                            GW::UI::AsyncDecodeStr(quest.npc, &(*insert_it.first).second.npc_name);
-                            if (quest.objectives && *quest.objectives != 0)
-                            {
-                                GW::UI::AsyncDecodeStr(quest.objectives,
-                                                       &(*insert_it.first).second.objectives);
+                                GW::UI::ChangeQuest(key);
+                                already_called_changequest_ids.insert(key);
                             }
 
-                            current_quest_strs_decoding.emplace(key);
-                        }
-                        else
-                        {
-                            if (! already_called_changequest_ids.contains(key))
-                            {
-                                auto active_quest_id = (uint32_t)GW::QuestMgr::GetActiveQuestId();
-                                if (active_quest_id != key)
-                                {
-                                    GW::UI::ChangeQuest(key);
-                                    already_called_changequest_ids.insert(key);
-                                }
-
-                                ChatWriter::WriteIngameDebugChat(
-                                  std::format("Init: Could not decode a quest: {}",
-                                              static_cast<uint32_t>(quest.quest_id)),
-                                  ChatColor::DarkRed);
-                            }
+                            ChatWriter::WriteIngameDebugChat(
+                              std::format("Init: Could not decode a quest: {}",
+                                          static_cast<uint32_t>(quest.quest_id)),
+                              ChatColor::DarkRed);
                         }
                     }
                 }
-
-                quests = builder.CreateVector(quests_vector);
             }
+
+            quests = builder.CreateVector(quests_vector);
         }
     }
+
     uint32_t create_bag_item(flatbuffers::FlatBufferBuilder& builder, GW::Bag** const& bag_array,
                              const uint32_t& bag_index,
                              std::vector<flatbuffers::Offset<GWIPC::Item>>& bag_items_vector)
