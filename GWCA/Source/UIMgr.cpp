@@ -259,10 +259,23 @@ namespace {
         delete abuf;
     }
 
-    void __cdecl __calback_copy_wstring(void *param, wchar_t *s) {
-        GWCA_ASSERT(param && s);
-        std::wstring *str = (std::wstring *)param;
-        *str = s;
+    void __cdecl __calback_copy_wstring(void* param, wchar_t* s)
+    {
+        if (!param || !s)
+        {
+            return;
+        }
+
+        __try
+        {
+            GWCA_ASSERT(param && s);
+            std::wstring* str = (std::wstring*)param;
+            *str = s;
+        }
+        __except (EXCEPTION_EXECUTE_HANDLER)
+        {
+            // Log an error message or handle the exception as appropriate
+        }
     }
 
 
