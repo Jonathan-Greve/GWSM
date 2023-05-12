@@ -14,7 +14,8 @@ public:
     }
 
     void update(const UpdateStatus update_status, const GWIPC::UpdateOptions* update_options,
-                const bool items_changed, const bool quests_changed, std::string& nav_mesh_file_path)
+                const bool items_changed, const bool quests_changed, const bool instance_load_changed,
+                std::string& nav_mesh_file_path, const InstanceLoadData& instance_load_data)
     {
 
         // Create a flatbuffer builder object
@@ -45,7 +46,7 @@ public:
             build_character(builder_, character);
 
             // Create the Instance object
-            build_instance(builder_, instance);
+            build_instance(builder_, instance, instance_load_data);
 
             // Create the Party object
             build_party(builder_, party);
@@ -637,7 +638,8 @@ private:
     }
 
     void build_instance(flatbuffers::FlatBufferBuilder& builder,
-                        flatbuffers::Offset<GWIPC::Instance>& instance)
+                        flatbuffers::Offset<GWIPC::Instance>& instance,
+                        const InstanceLoadData& instance_load_data)
     {
 
         GWIPC::InstanceBuilder instance_builder(builder);
@@ -646,6 +648,7 @@ private:
         {
             instance_builder.add_instance_id(character_context->token1);
             instance_builder.add_map_id(character_context->map_id);
+            instance_builder.add_file_hash(instance_load_data.curr_instance_load_file.map_fileID);
         }
 
         auto instance_type = GW::Map::GetInstanceType();

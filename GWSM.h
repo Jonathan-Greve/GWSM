@@ -49,6 +49,7 @@ public:
 
     ItemCallbacks item_callsbacks_;
     QuestCallbacks quest_callsbacks_;
+    InstanceLoadCallbacks instance_load_callbacks;
 
 private:
     GWSM()

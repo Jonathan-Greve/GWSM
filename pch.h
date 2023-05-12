@@ -91,6 +91,7 @@
 #include "ChatWriter.h"
 #include "ItemCallbacks.h"
 #include "QuestCallbacks.h"
+#include "InstanceLoadCallbacks.h"
 #include "EncString.h"
 #include "DialogsManager.h"
 #include "GWCA_UIMgr_Extensions.h"

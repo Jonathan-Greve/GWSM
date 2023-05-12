@@ -54,6 +54,9 @@
     <ClCompile Include="EncString.cpp">
       <Filter>Utils</Filter>
     </ClCompile>
+    <ClCompile Include="InstanceLoadCallbacks.cpp">
+      <Filter>Packet callbacks</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="framework.h" />
@@ -110,6 +113,9 @@
     </ClInclude>
     <ClInclude Include="EncString.h">
       <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="InstanceLoadCallbacks.h">
+      <Filter>Packet callbacks</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

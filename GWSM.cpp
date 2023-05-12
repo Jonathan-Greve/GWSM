@@ -48,6 +48,13 @@ void GWSM::Init()
         Terminate();
     }
 
+    if (! instance_load_callbacks.init())
+    {
+        ChatWriter::WriteIngameDebugChat("Init: Failed initializing InstanceLoadCallbacks.",
+                                         ChatColor::DarkRed);
+        Terminate();
+    }
+
     for (int i = 0x1; i < 0x270; i++)
     {
         if (i == 0x7e)
@@ -154,8 +161,13 @@ void GWSM::Update(GW::HookStatus*)
         const auto inventory_or_equipment_changed =
           gwsm_instance.item_callsbacks_.items_changed.exchange(false);
         const auto quests_changed = gwsm_instance.quest_callsbacks_.quests_changed.exchange(false);
+        const auto instance_load_changed =
+          gwsm_instance.instance_load_callbacks.instance_load_file_changed.exchange(false);
+
+        const auto instance_load_data = gwsm_instance.instance_load_callbacks.instance_load_data;
 
         gwsm_instance.client_data_updater_.update(
-          update_status, update_options, inventory_or_equipment_changed, quests_changed, nav_mesh_file_path);
+          update_status, update_options, inventory_or_equipment_changed, quests_changed,
+          instance_load_changed, nav_mesh_file_path, instance_load_data);
     }
 }
