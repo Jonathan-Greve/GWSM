@@ -299,7 +299,8 @@ namespace {
         if (address && Scanner::IsValidPtr(*(uintptr_t*)address))
             PreferencesInitialised_Addr = *(uintptr_t*)address;
 
-        address = GW::Scanner::Find("\x83\x0e\x02\x57\x6a\x2a", "xxxxxx", -0x2c); // BuildLoginStruct function start
+        address = GW::Scanner::Find("\x8d\x85\x78\xf7\xff\xff\x50", "xxxxxxx",0x7);
+        address = GW::Scanner::FunctionFromNearCall(address); // BuildLoginStruct
         if (address) {
             GetCommandLineFlag_Func = (GetFlagPreference_pt)GW::Scanner::FunctionFromNearCall(address + 0xf);
             GetCommandLineString_Func = (GetStringPreference_pt)GW::Scanner::FunctionFromNearCall(address + 0x32);
@@ -314,7 +315,7 @@ namespace {
         if (address && GW::Scanner::IsValidPtr(address, GW::Scanner::TEXT)) {
             GetCommandLineNumber_Func = (GetNumberPreference_pt)address;
             CommandLineNumber_Buffer = *(uint32_t**)(address + 0x29);
-            CommandLineNumber_Buffer += 0x33;
+            CommandLineNumber_Buffer += 0x30; // Offset for command line values
         }
 
         SetInGameShadowQuality_Func = (SetInGameShadowQuality_pt)GW::Scanner::FindAssertion("p:\\code\\gw\\agentview\\avshadow.cpp","No valid case for switch variable 'value'",-0xca);
