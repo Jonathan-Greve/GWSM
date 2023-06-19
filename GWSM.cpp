@@ -166,8 +166,11 @@ void GWSM::Update(GW::HookStatus*)
 
         const auto instance_load_data = gwsm_instance.instance_load_callbacks.instance_load_data;
 
-        gwsm_instance.client_data_updater_.update(
-          update_status, update_options, inventory_or_equipment_changed, quests_changed,
-          instance_load_changed, nav_mesh_file_path, instance_load_data);
+        if (update_options->should_update_client_data())
+        {
+            gwsm_instance.client_data_updater_.update(
+              update_status, update_options, inventory_or_equipment_changed, quests_changed,
+              instance_load_changed, nav_mesh_file_path, instance_load_data);
+        }
     }
 }
