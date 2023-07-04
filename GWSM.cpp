@@ -63,6 +63,7 @@ void GWSM::Init()
                                           quest_test_callback);
     }
     connection_manager_.connect();
+    update_options_manager_.update(true, true, true);
 
     ChatWriter::WriteIngameDebugChat("Init: Finished.", ChatColor::Green);
 }
