@@ -55,13 +55,6 @@ void GWSM::Init()
         Terminate();
     }
 
-    for (int i = 0x1; i < 0x270; i++)
-    {
-        if (i == 0x7e)
-            continue;
-        GW::UI::RegisterUIMessageCallback(&QuestTest_HookEntry, (GW::UI::UIMessage)(0x10000000 | i),
-                                          quest_test_callback);
-    }
     connection_manager_.connect();
     update_options_manager_.update(true, true, true);
 
@@ -128,6 +121,9 @@ void GWSM::Update(GW::HookStatus*)
         auto& gwsm_instance = GWSM::Instance();
 
         const auto update_options = gwsm_instance.update_options_manager_.get_update_options();
+
+        // Update if the client should render (and use much more CPU and GPU resources)
+        GW::Render::SetShouldRender(update_options->should_render());
 
         std::string nav_mesh_file_path;
         UpdateStatus update_status;

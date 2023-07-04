@@ -2,6 +2,7 @@
 #include "GWCA_UIMgr_Extensions.h"
 
 uintptr_t UI_Windows_structs;
+uintptr_t should_render_address;
 
 typedef void(__thiscall* ChangeActiveQuestTextAndMarker_pt)(void* ecx_this_ptr, uint32_t* change_quest_struct,
                                                             bool should_change_highlighted_quest);
@@ -25,7 +26,11 @@ bool InitUIExtensions()
     ChangeActiveQuest_Func = (ChangeActiveQuest_pt)GW::Scanner::Find(
       "\x55\x8b\xec\x83\xec\x1c\x53\x56\x57\xe8\x82", "xxxxxxxxxxx", 0);
 
-    if (ChangeActiveQuestTextAndMarker_Func && ChangeActiveQuest_Func)
+    should_render_address =
+      GW::Scanner::Find("\xD8\xD1\xDF\xE0\x56\x8B\x75\x08\xDD\xD9\xF6\xC4\x41\x0F\x8B\x76\x02\x00\x00",
+                        "xxxxxxxxxxxxxxxxxxx", +0x74);
+
+    if (ChangeActiveQuestTextAndMarker_Func && ChangeActiveQuest_Func && should_render_address)
     {
         return true;
     }
@@ -81,6 +86,14 @@ namespace UI
         }
 
         return false;
+    }
+
+}
+namespace Render
+{
+    GWCA_API void SetShouldRender(bool new_value)
+    {
+        **reinterpret_cast<bool**>(should_render_address) = new_value;
     }
 }
 }
