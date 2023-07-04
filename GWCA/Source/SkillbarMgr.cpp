@@ -30,8 +30,8 @@ namespace {
     using namespace SkillbarMgr;
 
     Skill* skill_array_addr = 0;
-    AttributeInfo* attribute_array_addr = 0;
-    uint32_t ATTRIBUTE_COUNT = 0;
+    AttributeInfo* attribute_array_addr = nullptr;
+    uint32_t attribute_array_count = 0x33;
 
     const char _Base64ToValue[128] = {
         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, // [0,   16)
@@ -62,28 +62,31 @@ namespace {
         return val;
     }
 
-    Constants::Profession GetAttributeProfession(Constants::Attribute attribute, bool* is_primary_attribute) {
+    Constants::Profession GetAttributeProfession(Constants::Attribute attribute, bool* is_primary_attribute = nullptr) {
 
         auto info = GetAttributeConstantData(attribute);
         if (!info)
             return Constants::Profession::None;
-        switch (attribute) {
-        case Constants::Attribute::FastCasting:
-        case Constants::Attribute::SoulReaping:
-        case Constants::Attribute::EnergyStorage:
-        case Constants::Attribute::DivineFavor:
-        case Constants::Attribute::Strength:
-        case Constants::Attribute::Expertise:
-        case Constants::Attribute::CriticalStrikes:
-        case Constants::Attribute::SpawningPower:
-        case Constants::Attribute::Leadership:
-        case Constants::Attribute::Mysticism:
-            *is_primary_attribute = true;
-            break;
-        default:
-            *is_primary_attribute = false;
-            break;
+        if (is_primary_attribute) {
+            switch (attribute) {
+            case Constants::Attribute::FastCasting:
+            case Constants::Attribute::SoulReaping:
+            case Constants::Attribute::EnergyStorage:
+            case Constants::Attribute::DivineFavor:
+            case Constants::Attribute::Strength:
+            case Constants::Attribute::Expertise:
+            case Constants::Attribute::CriticalStrikes:
+            case Constants::Attribute::SpawningPower:
+            case Constants::Attribute::Leadership:
+            case Constants::Attribute::Mysticism:
+                *is_primary_attribute = true;
+                break;
+            default:
+                *is_primary_attribute = false;
+                break;
+            }
         }
+
         return (Constants::Profession)info->profession_id;
     }
 
@@ -146,7 +149,6 @@ namespace {
         address = GW::Scanner::Find("\xba\x33\x00\x00\x00\x89\x08\x8d\x40\x04", "x?xxxxxxxx", -4);
         if (Scanner::IsValidPtr(*(uintptr_t*)address, Scanner::RDATA)) {
             attribute_array_addr = *(AttributeInfo**)address;
-            ATTRIBUTE_COUNT = *(uint32_t*)(address + 5);
         }
 
         UseSkill_Func = (UseSkill_pt)GW::Scanner::Find( "\x85\xF6\x74\x5B\x83\xFE\x11\x74", "xxxxxxxx", -0x126);
@@ -164,7 +166,7 @@ namespace {
         HookBase::CreateHook(UseSkill_Func, OnUseSkill, (void**)&RetUseSkill);
 
         GWCA_INFO("[SCAN] SkillArray = %p", skill_array_addr);
-        GWCA_INFO("[SCAN] AttributeArray = %p, Count = %d", attribute_array_addr, ATTRIBUTE_COUNT);
+        GWCA_INFO("[SCAN] AttributeArray = %p", attribute_array_addr);
         GWCA_INFO("[SCAN] UseSkill_Func = %p", UseSkill_Func);
         GWCA_INFO("[SCAN] ChangeSecondary_Func = %p", ChangeSecondary_Func);
         GWCA_INFO("[SCAN] LoadAttributes_Func = %p", LoadAttributes_Func);
@@ -209,6 +211,39 @@ namespace {
         }
         return nullptr;
     }
+
+    Constants::Profession GetSkillProfession(Constants::SkillID skill_id) {
+        auto data = GetSkillConstantData(skill_id);
+        return data ? static_cast<GW::Constants::Profession>(data->profession) : GW::Constants::Profession::None;
+    }
+    bool IsPrimaryAttributeRequired(const SkillTemplate& skill_template, const GW::Constants::Profession profession) {
+        if (profession == GW::Constants::Profession::None)
+            return false;
+        // If any of the attributes in this skill bar rely on the primary profession drop out
+        bool is_primary_attribute = false;
+        for (size_t i = 0; i < _countof(skill_template.attributes); i++) {
+            if (GetAttributeProfession(skill_template.attributes[i].attribute, &is_primary_attribute) == profession
+                && is_primary_attribute)
+                return true;
+        }
+        return false;
+    }
+    bool IsProfessionRequired(const SkillTemplate& skill_template, const GW::Constants::Profession profession) {
+        if (profession == GW::Constants::Profession::None)
+            return false;
+        // If any of the skills in this skill bar rely on the primary profession drop out
+        for (size_t i = 0; i < _countof(skill_template.skills); i++) {
+            if (GetSkillProfession(skill_template.skills[i]) == profession)
+                return true;
+        }
+        // If any of the attributes in this skill bar rely on the primary profession drop out
+        for (size_t i = 0; i < _countof(skill_template.attributes); i++) {
+            if (GetAttributeProfession(skill_template.attributes[i].attribute) == profession)
+                return true;
+        }
+        return false;
+    }
+
 }
 namespace GW {
 
@@ -223,12 +258,15 @@ namespace GW {
     namespace SkillbarMgr {
 
 
+
         Skill* GetSkillConstantData(Constants::SkillID skill_id) {
             Skill* arr = (Skill*)skill_array_addr;
             return skill_array_addr ? &arr[(uint32_t)skill_id] : nullptr;
         }
         AttributeInfo* GetAttributeConstantData(Constants::Attribute attribute_id) {
-            return attribute_array_addr && (uint32_t)attribute_id < ATTRIBUTE_COUNT ? &attribute_array_addr[(uint32_t)attribute_id] : nullptr;
+            if (attribute_array_count <= static_cast<uint32_t>(attribute_id))
+                return nullptr;
+            return &attribute_array_addr[static_cast<uint32_t>(attribute_id)];
         }
 
         bool ChangeSecondProfession(Constants::Profession profession, uint32_t hero_index) {
@@ -377,8 +415,8 @@ namespace GW {
             for (int i = 0; i < attrib_count; i++) {
                 uint32_t attrib_id = (uint32_t)_ReadBits(&it, bits_per_attr);
                 int attrib_val = _ReadBits(&it, 4);
-                if (attrib_id >= ATTRIBUTE_COUNT) {
-                    GWCA_ERR("Attribute id %d is out of range. (count = %d)\n", attrib_id, ATTRIBUTE_COUNT);
+                if (attrib_id >= attribute_array_count) {
+                    GWCA_ERR("Attribute id %d is out of range. (count = %d)\n", attrib_id, attribute_array_count);
                     return false;
                 }
                 if (attrib_val > 12) {
@@ -448,16 +486,26 @@ namespace GW {
             AgentLiving* me = Agents::GetPlayerAsAgentLiving();
             if (!me) return false;
 
-            if (me->primary != (BYTE)skill_template.primary)
-                return false;
             const auto profession_state = GetAgentProfessionState(me->agent_id);
             if (!profession_state) {
                 return false;
             }
-            if (profession_state->primary != skill_template.primary) {
-                return false;
+            if (skill_template.primary != Constants::Profession::None && profession_state->primary != skill_template.primary) {
+                if (IsPrimaryAttributeRequired(skill_template, skill_template.primary)) {
+                    // Build contains points in this profession's primary attribute; we can't avoid it.
+                    return false;
+                }
+                if (IsProfessionRequired(skill_template, skill_template.primary)) {
+                    // Primary is required e.g. skills or attributes, but not the primary attribute - it could be loaded as a secondary
+                    if (IsProfessionRequired(skill_template, skill_template.secondary)) {
+                        // Secondary profession is also required, can't use it.
+                        return false; 
+                    }
+                    // Swap primary with secondary (we'll check whether its unlocked later)
+                    skill_template.secondary = skill_template.primary;
+                }
             }
-            if (skill_template.secondary != Constants::Profession::None) {
+            if (skill_template.secondary != Constants::Profession::None && IsProfessionRequired(skill_template, skill_template.secondary)) {
                 if (!profession_state->IsProfessionUnlocked(skill_template.secondary)) {
                     return false;
                 }
@@ -509,17 +557,24 @@ namespace GW {
             if (!profession_state) {
                 return false; // Hero not unlocked??
             }
-
-            if (profession_state->primary != skill_template.primary) {
-                return false;
-            }
-            if (skill_template.secondary != Constants::Profession::None) {
-                if (!profession_state->IsProfessionUnlocked(skill_template.secondary)) {
+            if (skill_template.primary != Constants::Profession::None && profession_state->primary != skill_template.primary) {
+                if (IsPrimaryAttributeRequired(skill_template, skill_template.primary)) {
+                    // Build contains points in this profession's primary attribute; we can't avoid it.
                     return false;
                 }
-                if (profession_state->secondary != skill_template.secondary) {
-                    ChangeSecondProfession(skill_template.secondary, hero_index);
+                if (IsProfessionRequired(skill_template, skill_template.primary)) {
+                    // Primary is required e.g. skills or attributes, but not the primary attribute - it could be loaded as a secondary
+                    if (IsProfessionRequired(skill_template, skill_template.secondary)) {
+                        // Secondary profession is also required, can't use it.
+                        return false; 
+                    }
+                    // Swap primary with secondary (we'll check whether its unlocked later)
+                    skill_template.secondary = skill_template.primary;
                 }
+            }
+            if (skill_template.secondary != Constants::Profession::None && profession_state->secondary != skill_template.secondary) {
+                // NB: Heroes have all secondary professions unlocked?
+                ChangeSecondProfession(skill_template.secondary, hero_index);
             }
 
             // @Robustness: That cast is not very good :(

@@ -19,11 +19,7 @@ namespace GW {
 
         GWCA_API GW::Constants::QuestID GetActiveQuestId();
 
-        GWCA_API bool SetActiveQuestId(Constants::QuestID quest_id);
-
         GWCA_API Quest* GetActiveQuest();
-
-        GWCA_API bool SetActiveQuest(Quest* quest);
 
         GWCA_API bool AbandonQuest(Quest* quest);
 

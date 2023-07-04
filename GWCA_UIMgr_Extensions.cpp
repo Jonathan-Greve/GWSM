@@ -23,7 +23,7 @@ bool InitUIExtensions()
       "\x55\x8b\xec\x83\xec\x08\x83\x7d\x0c\x00\x53\x56", "xxxxxxxxxxxx", 0);
 
     ChangeActiveQuest_Func = (ChangeActiveQuest_pt)GW::Scanner::Find(
-      "\x55\x8b\xec\x83\xec\x1c\x53\x56\x57\xe8\x42", "xxxxxxxxxxx", 0);
+      "\x55\x8b\xec\x83\xec\x1c\x53\x56\x57\xe8\x82", "xxxxxxxxxxx", 0);
 
     if (ChangeActiveQuestTextAndMarker_Func && ChangeActiveQuest_Func)
     {

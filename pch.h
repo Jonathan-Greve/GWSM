@@ -29,7 +29,6 @@
 #include <algorithm>
 
 // Other stuff
-
 #include "GWIPC.h"
 #include "string_utils.h"
 #include "AgentUtils.h"

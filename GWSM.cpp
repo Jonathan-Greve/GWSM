@@ -143,9 +143,9 @@ void GWSM::Update(GW::HookStatus*)
         else if (cam && ! std::isinf(cam->position.x))
         {
             // Always keep quest log open
-            auto window_pos = GetWindowPosition(GW::UI::WindowID::WindowID_QuestLog);
-            if (! window_pos->visible())
-                GW::UI::Keypress(GW::UI::ControlAction_OpenQuestLog);
+            //auto window_pos = GetWindowPosition(GW::UI::WindowID::WindowID_QuestLog);
+            //if (! window_pos->visible())
+            //    GW::UI::Keypress(GW::UI::ControlAction_OpenQuestLog);
 
             nav_mesh_file_path = update_nav_mesh();
 

@@ -20,6 +20,25 @@ using namespace GW;
 
 typedef void(__cdecl* DoAction_pt)(uint32_t identifier);
 
+HookEntry SetActiveQuest_HookEntry;
+DoAction_pt SetActiveQuest_Func = 0;
+DoAction_pt SetActiveQuest_Ret = 0;
+
+void OnSetActiveQuest(uint32_t quest_id)
+{
+    GW::Hook::EnterHook();
+    UI::SendUIMessage(UI::UIMessage::kSendSetActiveQuest, (void*)quest_id);
+    GW::Hook::LeaveHook();
+};
+void OnSetActiveQuest_UIMessage(GW::HookStatus* status, UI::UIMessage message_id, void* wparam, void*)
+{
+    GWCA_ASSERT(message_id == UI::UIMessage::kSendSetActiveQuest);
+    if (! status->blocked)
+    {
+        SetActiveQuest_Ret((uint32_t)wparam);
+    }
+}
+
 HookEntry AbandonQuest_HookEntry;
 DoAction_pt AbandonQuest_Func = 0;
 DoAction_pt AbandonQuest_Ret = 0;
@@ -73,7 +92,10 @@ void DisableHooks()
         HookBase::DisableHooks(AbandonQuest_Func);
 }
 
-void Exit() { HookBase::RemoveHook(AbandonQuest_Func); }
+void Exit()
+{
+    HookBase::RemoveHook(AbandonQuest_Func);
+}
 }
 
 namespace GW
