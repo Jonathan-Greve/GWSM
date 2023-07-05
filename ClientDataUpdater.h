@@ -25,6 +25,7 @@ public:
         flatbuffers::Offset<GWIPC::Instance> instance;
         flatbuffers::Offset<GWIPC::Party> party;
         flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<GWIPC::Enemy>>> enemies;
+        flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<GWIPC::AgentLiving>>> npcs;
         flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<GWIPC::Quest>>> quests;
         flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<GWIPC::Bag>>> bags;
         flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<GWIPC::Item>>> equipped_items;
@@ -53,6 +54,9 @@ public:
 
             // Create the Enemies object
             build_enemies(builder_, enemies);
+
+            // Create the NPCs object
+            build_npcs(builder_, npcs);
 
             auto current_time = std::chrono::system_clock::now();
             auto elapsed_time =
@@ -490,7 +494,7 @@ public:
         auto client_data =
           GWIPC::CreateClientData(builder_, character, instance, party, update_status.game_state, quests,
                                   bags, equipped_items, dialogs_info, nav_mesh_file_path_fb, items, gadgets,
-                                  enemies, unclaimed_items, material_storage, storage);
+                                  enemies, unclaimed_items, material_storage, storage, npcs);
 
         // Finish creating the flatbuffer and retrieve a pointer to the buffer
         builder_.Finish(client_data);
@@ -560,6 +564,10 @@ private:
     // Agent_id
     std::map<uint32_t, std::wstring> enemy_strs_;
     std::set<uint32_t> current_enemy_strs_decoding;
+
+    // Agent_id
+    std::map<uint32_t, std::wstring> npc_strs_;
+    std::set<uint32_t> current_npc_strs_decoding;
 
     std::set<uint32_t> already_called_changequest_ids;
 
@@ -1000,6 +1008,54 @@ private:
             }
 
             enemies = builder.CreateVector(enemies_vector);
+        }
+    }
+
+    void build_npcs(flatbuffers::FlatBufferBuilder& builder,
+                       flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<GWIPC::AgentLiving>>>& npcs)
+    {
+        const auto agents = GW::Agents::GetAgentArray();
+        if (agents && agents->valid())
+        {
+            std::vector<flatbuffers::Offset<GWIPC::AgentLiving>> npcs_vector;
+            for (const auto agent : *agents)
+            {
+                if (agent && agent->GetIsLivingType())
+                {
+                    auto agent_living = agent->GetAsAgentLiving();
+                    if (agent_living && (agent_living->allegiance == GW::Constants::Allegiance::Ally_NonAttackable || agent_living->allegiance == GW::Constants::Allegiance::Neutral))
+                    {
+
+                        auto key = agent_living->agent_id;
+                        const auto it = npc_strs_.find(key);
+                        if (it != npc_strs_.end())
+                        {
+                            if (it->second != L"")
+                            {
+                                current_npc_strs_decoding.erase(key);
+
+                                auto name = builder.CreateString(wstr_to_str(it->second.c_str()));
+                                GWIPC::AgentLivingBuilder agent_living_builder(builder);
+                                build_agent_living(agent_living, agent_living_builder);
+                                agent_living_builder.add_name(name);
+                                auto new_agent_living = agent_living_builder.Finish();
+
+                                npcs_vector.emplace_back(new_agent_living);
+                            }
+                        }
+                        else
+                        {
+
+                            auto insert_it = npc_strs_.emplace(key, std::wstring());
+                            auto res = GW::Agents::AsyncGetAgentName(agent, insert_it.first->second);
+
+                            current_npc_strs_decoding.emplace(key);
+                        }
+                    }
+                }
+            }
+
+            npcs = builder.CreateVector(npcs_vector);
         }
     }
 
