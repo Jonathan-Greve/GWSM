@@ -56,7 +56,7 @@ void GWSM::Init()
     }
 
     connection_manager_.connect();
-    update_options_manager_.update(true, true, true);
+    update_options_manager_.update(true, true, true, true);
 
     ChatWriter::WriteIngameDebugChat("Init: Finished.", ChatColor::Green);
 }
